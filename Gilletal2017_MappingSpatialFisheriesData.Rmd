@@ -191,3 +191,4 @@ trellis.unfocus()
 
 ![Figure 3. Spatial variation in reef fishing intensity (mt km-2) on Barbados' nearshore shallow shelf during the (A) pelagic fishing ‘off-season’ (Jun-Nov) and the (B) pelagic fishing season (Dec-May).](C:/Users/LocalAdmin/Documents/Data analysis/Bdos fisheries/Figure 3_5Jul17.png)
 
+test
