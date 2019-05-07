@@ -34,7 +34,7 @@ Import the fishing area shapefile, along with other shapefiles to include in the
 * fishing activity/gear (e.g. trapfishing)
 
 ```{r include=F}
-dsn <- 'R:/Gill/spatial-fisheries-analysis/Giletal2018_MarinePolicy_data'
+dsn <- '~/OneDrive - Duke University/MP Project/spatial-fisheries-analysis'
 ```
 
 ```{r results='hide', cache=TRUE}
