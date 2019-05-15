@@ -13,7 +13,7 @@ log.data.total <- import(paste0(input.dir,"Statia logbook Raw data last update A
 log.data <- select(log.data.total,Rec_ID:"No catch") #between Rec_ID and "No Catch are our interesting columns
 names(log.data)
 names(log.data) <- gsub(" ","_",names(log.data)) #get rid of the names between spaces
-names(log.data) <- gsub("No.lobster/fish_etc.","Num_ind",names(log.data)) # get rid of weid lobster name
+names(log.data) <- gsub("No.lobster/fish_etc.","Num_ind",names(log.data)) # get rid of weird lobster name
 ###########Clean and tidy up the data by replaceing rogue names#############
 unique(log.data$Year) #check
 log.data$Year <- ifelse(log.data$Year==2004,2014,log.data$Year) ## edit the years 
@@ -88,7 +88,7 @@ lobster.number.year <- log.data %>%
   #merge (Lob_num<-as.numeric(Num_ind, na.rm=TRUE))
   #summarize(, lobster_num = (sum(Lob_num, na.rm=TRUE)))
   
-####################### joining logbook entries for fish, lobster, and conch #############
+####################### reading logbook entries for fish, lobster, and conch #############
 log.data.Fish <- import(paste0(input.dir,"Statia logbook Raw data last update April 20, 2018.xlsx"),
                          which = 2, skip =0)   #import sheet for fish data
 names(log.data.Fish)
@@ -97,48 +97,70 @@ names(log.data.Fish) <- gsub("/","_",names(log.data.Fish)) #get rid of the / bet
 
 log.data.Lobster <- import(paste0(input.dir,"Statia logbook Raw data last update April 20, 2018.xlsx"),
                          which = 3, skip =0) # import sheet for lobster data
+names(log.data.Lobster)
+names(log.data.Lobster) <- gsub(" ","_",names(log.data.L)) #get rid of the spaces between names
+names(log.data.Lobster) <- gsub("/","_",names(log.data.L)) #get rid of the / between names
 
 log.data.Conch <- import(paste0(input.dir,"Statia logbook Raw data last update April 20, 2018.xlsx"),
                          which = 4, skip =0) #import sheet for conch data
+names(log.data.Conch)
+names(log.data.C) <- gsub(" ","_",names(log.data.C)) #get rid of the spaces between names
+names(log.data.C) <- gsub("/","_",names(log.data.C)) #get rid of the / between names
+
 
 ####################### cleaning logbooks and renaming ####################################
 
-log.data.F <- log.data.Fish %>%
-  filter(!is.na(Species_common_name))
-
+log.data.F <- log.data.Fish %>% #create the join data and filter it by year to limit the observations
+  filter(!is.na(Year))
 names(log.data.F)
-names(log.data.F) <- gsub(" ","_",names(log.data.F)) #get rid of the spaces between names
-names(log.data.F) <- gsub("/","_",names(log.data.F)) #get rid of the / between names
-#names(log.data.F) <- gsub("(","",names(log.data.F)) #get rid of the names between spaces
 
-joined.fish <- log.data %>% 
-  mutate(Trip_ID=as.character(Trip_ID))%>%
+joined.fish <- log.data %>% # join the log book and the fish data by unique Trip ID
+  mutate(Trip_ID=as.character(Trip_ID))%>% # need to convert to a character
   filter(Landings =="Fish")%>%
   left_join(log.data.F, by ="Trip_ID")
 
-log.data.L <-log.data.Lobster
+anti.join.fish <-log.data %>% #use this to figure out which ones are not joining or do not have trip IDs
+  mutate(Trip_ID=as.character(Trip_ID))%>%
+  filter(Landings =="Fish")%>%
+  anti_join(log.data.F, by = "Trip_ID")
+
+log.data.L <-log.data.Lobster %>% # create the join data and filter it by year to limit the observations
+  filter(!is.na(Year))
 names(log.data.L)
-names(log.data.L) <- gsub(" ","_",names(log.data.L)) #get rid of the spaces between names
-names(log.data.L) <- gsub("/","_",names(log.data.L)) #get rid of the / between names
-log.data.L$Trip_ID <-type.convert(log.data.L$Trip_ID, as.is =TRUE)
+#log.data.L$Trip_ID <-type.convert(log.data.L$Trip_ID, as.is =TRUE)
 
 lob.trip.trans <- log.data.L %>% 
-  mutate(Trip_ID = as.character(Trip_ID))
+  mutate(Trip_ID = as.character(Trip_ID)) # change the Trip ID from logical to a character
   
-joined.lobster <- log.data %>%
+joined.lobster <- log.data %>%  #join the log books and lobster data by unique trip id
+  mutate(Trip_ID=as.character(Trip_ID))%>%
   filter(Landings =="Spiny Lobster")%>%
-  left_join(log.data.L, by ="Trip_ID")
+  left_join(lob.trip.trans, by ="Trip_ID")
 
-log.data.C <- log.data.Conch
+anti.join.lobster <-log.data %>% #use this to figure out which ones are and are not joining, seems like all :(
+  mutate(Trip_ID=as.character(Trip_ID))%>%
+  filter(Landings =="Spiny Lobster")%>%
+  anti_join(lob.trip.trans, by = "Trip_ID")
+
+log.data.C <- log.data.Conch %>% #create the join data and filter it by year to limit the observations
+  rename(Trip_ID = Rec_ID) %>% # rename this variable
+  filter(!is.na(Year))
 names(log.data.C)
-names(log.data.C) <- gsub(" ","_",names(log.data.C)) #get rid of the spaces between names
-names(log.data.C) <- gsub("/","_",names(log.data.C)) #get rid of the / between names
-names(log.data.C) <- gsub("Rec_ID","Trip_ID",names(log.data.C)) #get rid of the / between names
 
-joined.Conch <- log.data %>% 
+joined.Conch <- log.data %>% # join the log book and conch data by unique trip id 
   filter(Landings =="Queen Conch")%>%
-  left_join(log.data.C, by ="Trip_ID")
+  left_join(log.data.C, by ="Trip_ID") 
 
+anti.join.conch <- log.data %>% # use this join to see what values are not joining 
+  filter(Landings =="Queen Conch")%>%
+  anti_join(log.data.C, by ="Trip_ID") 
+
+
+## when joining by trip id, there are a few observations in the specific sections that are missig Trip ID
+## numbers and are omitted from this joined sheet. Additionally, observations from the logbook that have 
+## conch, lobster, or fish observations in the original sheet are included in the join but have no
+## additional information from the join, essentially empty cells since the specific sheets are a small
+## subset of observations 
 
 
   
