@@ -30,7 +30,7 @@ log.data$Landings <- ifelse(log.data$Landings %in% c("Queen Conch","Conch","conc
 log.data$Landings <- ifelse(log.data$Landings %in% c("Whelk","Whelks"), "Whelk",log.data$Landings) # edit for Whelk
 unique(log.data$Landings) #check
 
-############################### Breaking out data by year #############
+############################### Breaking out data by year, and month, and by gear #############
 trips.year <- log.data %>% # looking at the number of trips per year 
   group_by(Year) %>%
   select(Year, Trip_ID) %>%
@@ -155,12 +155,58 @@ anti.join.conch <- log.data %>% # use this join to see what values are not joini
   filter(Landings =="Queen Conch")%>%
   anti_join(log.data.C, by ="Trip_ID") 
 
-
 ## when joining by trip id, there are a few observations in the specific sections that are missig Trip ID
 ## numbers and are omitted from this joined sheet. Additionally, observations from the logbook that have 
 ## conch, lobster, or fish observations in the original sheet are included in the join but have no
 ## additional information from the join, essentially empty cells since the specific sheets are a small
 ## subset of observations 
+
+##################################### beginning to filter by species per year and month ###########################
+
+unique(joined.fish$Species_latin_name)
+
+distinct.species.year <- joined.fish %>% # looking at the number of distinct species per year
+  group_by(Year.x) %>%
+  select(Year.x, Species_latin_name) %>%
+  summarize(n_distinct(Species_latin_name))
+
+species.year <- joined.fish %>% # looking at number of individuals per species per year 
+  group_by(Year.x) %>%
+  select(Year.x, Species_latin_name) %>%
+  count(Species_latin_name, name = "Count")
+
+distinct.species.month <- joined.fish %>% # looking at the number of distinct species per month
+  group_by(Year.x, Month.x) %>%
+  select(Year.x, Month.x, Species_latin_name) %>%
+  summarize(n_distinct(Species_latin_name))
+
+species.month <- joined.fish %>% # looking at number of individuals per species per month
+  group_by(Year.x, Month.x) %>%
+  select(Year.x, Month.x,Species_latin_name) %>%
+  count(Species_latin_name, name = "Count")
+
+########################### filtering by species per year per gear and per month per gear ###############
+
+distinct.species.year.gear <- joined.fish %>% # looking at the number of distinct species per year per gear
+  group_by(Year.x, Gear.x) %>%
+  select(Year.x,Gear.x, Species_latin_name) %>%
+  summarize(n_distinct(Species_latin_name))
+
+species.year.gear <- joined.fish %>% # looking at number of individuals per species per year per gear
+  group_by(Year.x, Gear.x) %>%
+  select(Year.x, Gear.x, Species_latin_name) %>%
+  count(Species_latin_name, name = "Count")
+
+distinct.species.month.gear <- joined.fish %>% # looking at the number of distinct species per month per gear
+  group_by(Year.x, Month.x, Gear.x) %>%
+  select(Year.x, Month.x, Gear.x, Species_latin_name) %>%
+  summarize(n_distinct(Species_latin_name))
+
+species.month.gear <- joined.fish %>% # looking at number of individuals per species per month per gear
+  group_by(Year.x, Month.x, Gear.x) %>%
+  select(Year.x, Month.x,Gear.x,Species_latin_name) %>%
+  count(Species_latin_name, name = "Count")
+
 
 
   
