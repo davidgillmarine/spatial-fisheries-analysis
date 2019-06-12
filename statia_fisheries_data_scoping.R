@@ -90,19 +90,19 @@ lobster.number.year <- log.data %>%
   
 ####################### reading logbook entries for fish, lobster, and conch #############
 log.data.Fish <- import(paste0(input.dir,"Statia logbook Raw data last update April 20, 2018.xlsx"),
-                         which = 2, skip =0)   #import sheet for fish data
+                         which = 2, skip =0, .name_repair="universal")   #import sheet for fish data
 names(log.data.Fish)
 names(log.data.Fish) <- gsub(" ","_",names(log.data.Fish)) #get rid of the spaces between names
 names(log.data.Fish) <- gsub("/","_",names(log.data.Fish)) #get rid of the / between names
 
 log.data.Lobster <- import(paste0(input.dir,"Statia logbook Raw data last update April 20, 2018.xlsx"),
-                         which = 3, skip =0) # import sheet for lobster data
+                         which = 3, skip =0, .name_repair="universal",col_types=c("numeric")) # import sheet for lobster data
 names(log.data.Lobster)
-names(log.data.Lobster) <- gsub(" ","_",names(log.data.L)) #get rid of the spaces between names
-names(log.data.Lobster) <- gsub("/","_",names(log.data.L)) #get rid of the / between names
+#names(log.data.Lobster) <- gsub(" ","_",names(log.data.L)) #get rid of the spaces between names
+#names(log.data.Lobster) <- gsub("/","_",names(log.data.L)) #get rid of the / between names
 
 log.data.Conch <- import(paste0(input.dir,"Statia logbook Raw data last update April 20, 2018.xlsx"),
-                         which = 4, skip =0) #import sheet for conch data
+                         which = 4, skip =0,.name_repair="universal") #import sheet for conch data
 names(log.data.Conch)
 names(log.data.C) <- gsub(" ","_",names(log.data.C)) #get rid of the spaces between names
 names(log.data.C) <- gsub("/","_",names(log.data.C)) #get rid of the / between names
@@ -127,10 +127,6 @@ anti.join.fish <-log.data %>% #use this to figure out which ones are not joining
 log.data.L <-log.data.Lobster %>% # create the join data and filter it by year to limit the observations
   filter(!is.na(Year))
 names(log.data.L)
-#log.data.L$Trip_ID <-type.convert(log.data.L$Trip_ID, as.is =TRUE)
-
-lob.trip.trans <- log.data.L %>% 
-  mutate(Trip_ID = as.character(Trip_ID)) # change the Trip ID from logical to a character
   
 joined.lobster <- log.data %>%  #join the log books and lobster data by unique trip id
   mutate(Trip_ID=as.character(Trip_ID))%>%
@@ -207,9 +203,16 @@ species.month.gear <- joined.fish %>% # looking at number of individuals per spe
   select(Year.x, Month.x,Gear.x,Species_latin_name) %>%
   count(Species_latin_name, name = "Count")
 
-
-
+###################################### Zone Analysis ##########################################
+names(log.data)
+zone1.year <- log.data %>% 
+group_by(Year) %>%
+  select(Year, Trip_ID, Z1) %>%
   
+
+
+
+
 #band_members %>% left_join(band_instruments)
   
 #log.data <- ifelse(log.data$Year==2004,2014,log.data$Year)
