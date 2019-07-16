@@ -119,49 +119,41 @@ names(log.data.F)
 joined.fish <- log.data %>% # join the log book and the fish data by unique Trip ID
   mutate(Trip_ID=as.character(Trip_ID))%>% # need to convert to a character
   filter(Landings =="Fish")%>%
-  left_join(log.data.F, by ="Trip_ID")
-
-joined.fish.test <- log.data %>% # join the log book and the fish data by unique Trip ID
-  mutate(Trip_ID=as.character(Trip_ID))%>% # need to convert to a character
-  filter(Landings =="Fish")%>%
   left_join(log.data.F, by = c( "Trip_ID", "Day", "Month", "Year"))
-
+#left_join(log.data.F, by ="Trip_ID")
+  
 anti.join.fish <-log.data %>% #use this to figure out which ones are not joining or do not have trip IDs
   mutate(Trip_ID=as.character(Trip_ID))%>%
   filter(Landings =="Fish")%>%
-  anti_join(log.data.F, by = "Trip_ID")
-
-anti.join.fish.test <-log.data %>% #use this to figure out which ones are not joining or do not have trip IDs
-  mutate(Trip_ID=as.character(Trip_ID))%>%
-  filter(Landings =="Fish")%>%
   anti_join(log.data.F,by = c("Trip_ID", "Day", "Month", "Year"))
+#anti_join(log.data.F, by = "Trip_ID")
 
 log.data.L <-log.data.Lobster %>% # create the join data and filter it by year to limit the observations
   filter(!is.na(Year))
 names(log.data.L)
   
 joined.lobster <- log.data %>%  #join the log books and lobster data by unique trip id
-  mutate(Trip_ID=as.character(Trip_ID))%>%
+  #mutate(Trip_ID=as.character(Trip_ID))%>%
   filter(Landings =="Spiny Lobster")%>%
-  left_join(lob.trip.trans, by ="Trip_ID")
+  left_join(log.data.L, by = c("Trip_ID", "Day", "Month", "Year"))
 
 anti.join.lobster <-log.data %>% #use this to figure out which ones are and are not joining, seems like all :(
-  mutate(Trip_ID=as.character(Trip_ID))%>%
+  #mutate(Trip_ID=as.character(Trip_ID))%>%
   filter(Landings =="Spiny Lobster")%>%
-  anti_join(lob.trip.trans, by = "Trip_ID")
+  anti_join(log.data.L, by = c("Trip_ID", "Day", "Month", "Year"))
 
 log.data.C <- log.data.Conch %>% #create the join data and filter it by year to limit the observations
   rename(Trip_ID = Rec_ID) %>% # rename this variable
   filter(!is.na(Year))
 names(log.data.C)
 
-joined.Conch <- log.data %>% # join the log book and conch data by unique trip id 
+joined.conch <- log.data %>% # join the log book and conch data by unique trip id 
   filter(Landings =="Queen Conch")%>%
-  left_join(log.data.C, by ="Trip_ID") 
+  left_join(log.data.C, by = c("Trip_ID", "Day", "Month", "Year")) 
 
 anti.join.conch <- log.data %>% # use this join to see what values are not joining 
   filter(Landings =="Queen Conch")%>%
-  anti_join(log.data.C, by ="Trip_ID") 
+  anti_join(log.data.C, by = c("Trip_ID", "Day", "Month", "Year")) 
 
 ## when joining by trip id, there are a few observations in the specific sections that are missig Trip ID
 ## numbers and are omitted from this joined sheet. Additionally, observations from the logbook that have 
@@ -174,57 +166,45 @@ anti.join.conch <- log.data %>% # use this join to see what values are not joini
 unique(joined.fish$Species_latin_name)
 
 distinct.species.year <- joined.fish %>% # looking at the number of distinct species per year
-  group_by(Year.x) %>%
-  select(Year.x, Species_latin_name) %>%
-  summarize(n_distinct(Species_latin_name))
-
-unique(joined.fish.test$Species_latin_name)
-
-distinct.species.year.test <- joined.fish.test %>% # looking at the number of distinct species per year
   group_by(Year) %>%
   select(Year, Species_latin_name) %>%
   summarize(n_distinct(Species_latin_name))
 
 species.year <- joined.fish %>% # looking at number of individuals per species per year 
-  group_by(Year.x) %>%
-  select(Year.x, Species_latin_name) %>%
-  count(Species_latin_name, name = "Count")
-
-species.year.test <- joined.fish.test %>% # looking at number of individuals per species per year 
   group_by(Year) %>%
   select(Year, Species_latin_name) %>%
   count(Species_latin_name, name = "Count")
 
 distinct.species.month <- joined.fish %>% # looking at the number of distinct species per month
-  group_by(Year.x, Month.x) %>%
-  select(Year.x, Month.x, Species_latin_name) %>%
+  group_by(Year, Month) %>%
+  select(Year, Month, Species_latin_name) %>%
   summarize(n_distinct(Species_latin_name))
 
 species.month <- joined.fish %>% # looking at number of individuals per species per month
-  group_by(Year.x, Month.x) %>%
-  select(Year.x, Month.x,Species_latin_name) %>%
+  group_by(Year, Month) %>%
+  select(Year, Month,Species_latin_name) %>%
   count(Species_latin_name, name = "Count")
 
 ####################### filtering by species per year per gear and per month per gear ###############
 
 distinct.species.year.gear <- joined.fish %>% # looking at the number of distinct species per year per gear
-  group_by(Year.x, Gear.x) %>%
-  select(Year.x,Gear.x, Species_latin_name) %>%
+  group_by(Year, Gear.x) %>%
+  select(Year,Gear.x, Species_latin_name) %>%
   summarize(n_distinct(Species_latin_name))
 
 species.year.gear <- joined.fish %>% # looking at number of individuals per species per year per gear
-  group_by(Year.x, Gear.x) %>%
-  select(Year.x, Gear.x, Species_latin_name) %>%
+  group_by(Year, Gear.x) %>%
+  select(Year, Gear.x, Species_latin_name) %>%
   count(Species_latin_name, name = "Count")
 
 distinct.species.month.gear <- joined.fish %>% # looking at the number of distinct species per month per gear
-  group_by(Year.x, Month.x, Gear.x) %>%
-  select(Year.x, Month.x, Gear.x, Species_latin_name) %>%
+  group_by(Year, Month, Gear.x) %>%
+  select(Year, Month, Gear.x, Species_latin_name) %>%
   summarize(n_distinct(Species_latin_name))
 
 species.month.gear <- joined.fish %>% # looking at number of individuals per species per month per gear
-  group_by(Year.x, Month.x, Gear.x) %>%
-  select(Year.x, Month.x,Gear.x,Species_latin_name) %>%
+  group_by(Year, Month, Gear.x) %>%
+  select(Year, Month,Gear.x,Species_latin_name) %>%
   count(Species_latin_name, name = "Count")
 
 ###################################### Zone Analysis For Fish ##########################################
@@ -584,6 +564,54 @@ zones.lob <- log.data %>%
  View(joined.zone.conch.trips.gear.monthly)
  
  ####################################### Zone Fish Data by Species #####################
+ GCRM.data.Fish <- import(paste0(input.dir,"GCRMN FISH BIOMASS DATA EUX 2018.xlsx"),
+                        which = 6, skip =0, .name_repair="universal")   #import sheet for fish LW values
+ names(GCRM.data.Fish)
+ 
+ GCRM.data.Fish <-   rename(GCRM.data.Fish, Species_latin_name = scientific)
+ 
+ fish.GCRM.join <-joined.fish %>%
+   left_join(GCRM.data.Fish)%>%
+   filter(!is.na(Species_latin_name))
+   
+ view(fish.GCRM.join)
+ 
+ names(fish.GCRM.join)
+ zones.fish.species <-fish.GCRM.join  %>% 
+   select(Trip_ID,Year,Month,Day,Z1:Z6,Landings,Gear.x,`Weight_(Lbs)`,Species_common_name,Species_latin_name,Length_.cm.,FL.TL, TL2FL, a, b) %>% 
+   mutate(n.zones=rowSums(!is.na(select(., Z1:Z6)))) %>% 
+   #mutate(n.fish.zone = rowSums(.,n_distinct(Species_latin_name)))%>%
+   gather(key="zone.total",value="zone_id",Z1:Z6) %>% 
+   filter(!is.na(zone_id)) %>% 
+   #filter(!is.na(Species_latin_name)) %>%
+   mutate(weight.per.zone=`Weight_(Lbs)`/n.zones)%>%
+   mutate(ind.fish.weight = ((a*Length_.cm.)^b)*TL2FL)
+   #filter(Landings=="Fish")%>%
+ head(zones.fish.species)
+ 
+ #types of fish per zone per year
+ zone.species.year <- zones.fish.species %>% 
+   group_by(Year,zone_id,Species_latin_name)%>%
+   count(Species_latin_name, name = "Num.ind")
+   #select(Year,zone_id,Species_latin_name, Num.ind)
+   #mutate(fish.weight.total= Num.ind*ind.fish.weight)
+   #summarize(n_distinct(Species_latin_name))
+ View(zone.species.year)
+ 
+ zone.species.monthly <- zones.fish.species %>% 
+   group_by(Year,Month, zone_id,Species_latin_name)%>%
+   count(Species_latin_name, name = "Num.ind")
+ #summarize(weight.total=sum(weight.per.zone,na.rm = T))
+ View(zone.species.monthly)
+ 
+ zone.species.weight.year <- zones.fish.species %>% 
+   group_by(Year,zone_id,Species_latin_name, ind.fish.weight)%>%
+ #count(Species_latin_name, name = "Num.ind")%>%
+ #select(Year,zone_id,Species_latin_name, Num.ind, ind.fish.weight)%>%
+ #mutate(fish.weight.total= Num.ind*ind.fish.weight)
+ summarize(fish.weight.total=sum(ind.fish.weight))
+ #count(Species_latin_name, name = "Num.ind")
+ View(zone.species.weight.year)
  
  
 #log.data <- ifelse(log.data$Year==2004,2014,log.data$Year)
