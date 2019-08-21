@@ -585,19 +585,17 @@ tail(fish.GCRM.join) #check the bottom to see if it joined correctly
    select(Trip_ID,Year,Month,Day,Gear.x, Z1.y:Z6.y, Landings.y, Species_common_name,Species_latin_name,family,Length_.cm.,FL.TL, TL2FL, a, b) %>% 
    mutate(Trip_ID=as.numeric(Trip_ID))%>% #change from numeric to a character
    filter(Landings.y =="Fish")%>%
-   #mutate(n.zones=rowSums(!is.na(select(., Z1.y:Z6.y)))) %>% 
-   
+   mutate(n.zones=rowSums(!is.na(select(., Z1.y:Z6.y)))) %>% 
    #mutate(n.fish.zone = rowSums(.,n_distinct(Species_latin_name)))%>%
-   #gather(key="zone.total",value="zone_id",Z1:Z6) %>% 
-   #filter(!is.na(zone_id)) %>% 
+   gather(key="zone.total",value="zone_id",Z1.y:Z6.y) %>% 
+   filter(!is.na(zone_id)) %>% 
    #filter(!is.na(Species_latin_name)) %>%
-   # mutate(weight.per.zone=Weight_.lbs./n.zones)%>%
-   #mutate(ind.fish.weight = ((a*Length_.cm.)^b)*TL2FL)%>%
+   #mutate(weight.per.zone=Weight_.lbs./n.zones)%>%
+   mutate(ind.fish.weight = ((a*Length_.cm.)^b)*TL2FL)
   head(zones.fish.species.2)
  
  #types of fish per zone per year
  zone.species.year <- zones.fish.species %>% 
-   
    group_by(Year,zone_id,Species_latin_name)%>%
    count(Species_latin_name, name = "Num.ind")
    #select(Year,zone_id,Species_latin_name, Num.ind)
@@ -665,11 +663,3 @@ tail(fish.GCRM.join) #check the bottom to see if it joined correctly
    select(Name,zone_id,Year, Landings,area_m2,area_km,weight.total,fishing_pressure, geometry)%>%
    rename(weight_lb=weight.total)
  
- 
- 
-#log.data <- ifelse(log.data$Year==2004,2014,log.data$Year)
-# filter(!Landings %in% c("Fish","fish","FIsh"))
-# ifelse(log.data$Landings %in% c("Fish","fish","FIsh"), "Fish",)
-#summary(log.data)
-#names(log.data) <- gsub(" ","_",names(log.data))
-#gsub(".*_",/,n)
