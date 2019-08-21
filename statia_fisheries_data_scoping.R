@@ -658,8 +658,8 @@ tail(fish.GCRM.join) #check the bottom to see if it joined correctly
  zone.ind2 <- zone.area %>% 
    left_join(fishing.zones, by = "zone_id")%>%
    mutate(area_m2 = as.numeric(area_m2))%>%
-   mutate(area_km=area_m2/1000000)%>%
-   mutate (fishing_pressure=weight.total/area_km)%>%
-   select(Name,zone_id,Year, Landings,area_m2,area_km,weight.total,fishing_pressure, geometry)%>%
+   mutate(area_km2 = area_m2/1000000)%>%
+   mutate (fishing_pressure=weight.total/area_km2)%>%
+   select(Name,zone_id,Year, Landings,area_m2,area_km2,weight.total,fishing_pressure, geometry)%>%
    rename(weight_lb=weight.total)
  
