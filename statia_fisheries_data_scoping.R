@@ -148,6 +148,8 @@ log.data.Fish <- import(paste0(input.dir,"Statia logbook Raw data last update Fe
                          which = 2, skip =0, .name_repair="universal")   #import sheet for fish data
 names(log.data.Fish)  #check the names 
 
+
+
 log.data.Lobster <- import(paste0(input.dir,"Statia logbook Raw data last update Feb 8 2019.xlsx"),
                          which = 3, skip =0, .name_repair="universal",col_types=c("numeric")) # import sheet for lobster data
 names(log.data.Lobster) #check names
@@ -161,6 +163,10 @@ names(log.data.Conch)   #check names
 log.data.F <- log.data.Fish %>% #create the join data and filter it by year to limit the observations
   filter(!is.na(Year))
 names(log.data.F)
+
+unique(log.data.F$Gear)
+log.data.F$Gear <- ifelse(log.data.F$Gear %in% c("PT","Pt","pt"), "PT",log.data.F$Gear)
+unique(log.data.F$Gear)
 
 log.data.L <-log.data.Lobster %>% # create the join data and filter it by year to limit the observations
   filter(!is.na(Year))
@@ -289,14 +295,14 @@ zones.lob <- log.data %>% #rename the lobster zones from the log data
   filter(!is.na(zone_id))%>%
   mutate(Num_ind=as.numeric(Num_ind))%>%
   mutate(ind.per.zone= Num_ind/n.zones) %>% 
-  filter(Landings=="Spiny Lobster")%>%
-  arrange(Trip_ID)
+  filter(Landings=="Spiny Lobster")
+  #arrange(Trip_ID)
  head(zones.lob) #check your work
 
  #number of lobsters per zone per year, the number of trips per zone, and the average number of lobster caught per trip
  zone.lob.year <- zones.lob %>% 
    group_by(Year,zone_id)%>% 
-   summarize(ind.total=sum(ind.per.zone,na.rm = T),
+   summarize(ind.total=sum(ind.per.zone, na.rm = T),
              Num.Trips=n_distinct(Trip_ID))%>%
    mutate(avg.ind.per.trip=ind.total/Num.Trips)
  head(zone.lob.year)
@@ -375,132 +381,96 @@ zones.lob <- log.data %>% #rename the lobster zones from the log data
    mutate(avg.ind.per.trip=ind.total/Num.Trips)
  head(zone.conch.gear.month)  
  
- ####################################### Zone Fish Data by Species #########################
+ ####################################### Fish Data by Species #########################
  
- #join both the log data sheets and the detailed sample fish sheet together
- log.data.F2.join <-log.data%>%   
-   mutate(Trip_ID=as.character(Trip_ID))%>% #change from numeric to a character
-   filter(Landings=="Fish")%>%  #filter by just fish
-   right_join(log.data.F, by = c("Trip_ID", "Day", "Month", "Year", "Gear")) #join from the right hand side to avoid duplicating the Trip_ID
-  # mutate(Z1:Z6 = )
- head(log.data.F2.join) #check to make sure it joined correctly
-
 #join the coral reef monitoring species data to the fish data in order to assess effort by family
- fish.GCRM.join <-log.data.F2.join %>% 
+ fish.GCRM.join <-log.data.F %>% 
    left_join(GCRM.data.Fish, by = "Species_latin_name" )%>%
-   filter(!is.na(Trip_ID))
+   filter(!is.na(Species_latin_name))
 head(fish.GCRM.join) #check the top to see if it joined correctly
 tail(fish.GCRM.join) #check the bottom to see if it joined correctly
  
 names(fish.GCRM.join) #check the names to get the correct names for each variable 
+
+unique(fish.GCRM.join$Gear)
  
-zones.fish.species.1 <- fish.GCRM.join  %>% #
-   select(Trip_ID,Year,Month,Day,Gear, Z1:Z6, Species_common_name,Species_latin_name,family,Length_.cm.,FL.TL, TL2FL, a, b) %>% 
-   mutate(Trip_ID=as.numeric(Trip_ID))%>% #change from numeric to a character
-   mutate(n.zones=rowSums(!is.na(select(., Z1:Z6)))) %>% 
-   gather(key="zone.total",value="zone_id",Z1:Z6) %>% 
-   filter(!is.na(zone_id)) %>%
-   filter(!is.na(Species_latin_name))%>%
+fish.species <- fish.GCRM.join  %>% #create a data set that has each individual fish weight calculated and organized by Rec_ID
+   select(Rec_ID,Year,Month,Day,Gear, Species_common_name,Species_latin_name,family,Length_.cm.,FL.TL, TL2FL, a, b) %>% 
+   mutate(Rec_ID=as.numeric(Rec_ID))%>% #change from character to numeric 
    mutate(ind.fish.weight = ((a*Length_.cm.)^b)*TL2FL)%>%
-   mutate(weight.per.zone=ind.fish.weight/n.zones)%>%
-  arrange(Trip_ID)
-  head(zones.fish.species.1)
+   arrange(Rec_ID)
+  head(fish.species)
   
- #types of fish per zone per year, the weight of the fish, the number of fish, and the avg. fish weight
- zone.species.year <- zones.fish.species.1 %>% 
-   group_by(Year,zone_id,Species_latin_name)%>%
-   summarize(zone.weight.total=sum(weight.per.zone,na.rm = T),
-             total.weight=sum(ind.fish.weight, na.rm=T),
-             Species_latin_name_n=n() )%>%
-   mutate(avg.fish.weight=total.weight/Species_latin_name_n)%>%
-   rename(n.ind = Species_latin_name_n)
- head(zone.species.year)
+unique(fish.species$Gear)
+  
+ #types of fish per year, the weight of the fish, the number of fish, and the avg. fish weight
+ fish.species.year <- fish.species %>% 
+   group_by(Year,Species_latin_name)%>%
+   summarize(total.weight=sum(ind.fish.weight, na.rm=T),
+             Num.ind=n_distinct(Rec_ID))%>%
+   mutate(avg.fish.weight=total.weight/Num.ind)
+ head(fish.species.year)
  
+ #types of fish per month, the weight of the fish, the number of fish, and the avg. fish weight
+ fish.species.month <- fish.species %>% 
+   group_by(Year,Month,Species_latin_name)%>%
+   summarize(total.weight=sum(ind.fish.weight, na.rm=T),
+             Num.ind=n_distinct(Rec_ID))%>%
+   mutate(avg.fish.weight=total.weight/Num.ind)
+ head(fish.species.month)
  
- #types of fish per zone per month, the weight of the fish, the number of fish, and the avg. fish weight
- zone.species.month <- zones.fish.species.1 %>% 
-   group_by(Year,Month,zone_id,Species_latin_name)%>%
-    summarize(zone.weight.total=sum(weight.per.zone,na.rm = T),
-              total.weight=sum(ind.fish.weight, na.rm=T),
-              Species_latin_name_n=n() )%>%
-    mutate(avg.fish.weight=total.weight/Species_latin_name_n)%>%
-    rename(n.ind = Species_latin_name_n)
- head(zone.species.month)
+ #family breakdown per year, the weight of the fish, and the number of fish
+ fish.family.year <- fish.species %>% 
+   group_by(Year,family)%>%
+   summarize(total.weight=sum(ind.fish.weight, na.rm=T),
+             Num.ind=n_distinct(Rec_ID))
+ head(fish.family.year)
  
- #family breakdown per zone per year, the weight of the fish, the number of fish, and the avg. fish weight
- zone.family.year <- zones.fish.species.1 %>% 
-   group_by(Year,zone_id,family)%>%
-    summarize(zone.weight.total=sum(weight.per.zone,na.rm = T),
-              total.weight=sum(ind.fish.weight, na.rm=T),
-             family_n=n())%>%
-   mutate(avg.fish.weight=total.weight/family_n)%>%
-   rename(n.ind = family_n)
- head(zone.family.year)
+ # family breakdown of the amount of fish caught per month for each family, the number of individuals,and the total weight per family 
+ fish.family.month <- fish.species %>% 
+   group_by(Year,Month,family)%>%
+   summarize(total.weight=sum(ind.fish.weight, na.rm=T),
+             Num.ind=n_distinct(Rec_ID))
+ head(fish.family.month)
  
- # family breakdown of the amount of fish caught for each family, the number of individuals, 
- # and the average fish weight per year 
- family.year <- zones.fish.species.1 %>% 
-    group_by(Year,family)%>%
-    summarize(total.weight=sum(ind.fish.weight, na.rm=T),
-              family_n=n())%>%
-    mutate(avg.fish.weight=total.weight/family_n)%>%
-    rename(n.ind = family_n)
- head(family.year)
+ #types of fish per year per gear, the weight of the fish, the number of fish, and the avg. fish weight
+ fish.species.gear.year <- fish.species %>% 
+   group_by(Year,Gear,Species_latin_name)%>%
+   summarize(total.weight=sum(ind.fish.weight, na.rm=T),
+             Num.ind=n_distinct(Rec_ID))%>%
+   mutate(avg.fish.weight=total.weight/Num.ind)
+ head(fish.species.gear.year)
+ unique(fish.species.gear.year$Gear)
  
- #family breakdown per zone per month, the weight of the fish, the number of fish, and the avg. fish weight
- zone.family.month <- zones.fish.species.1 %>% 
-   group_by(Year,Month, zone_id,family)%>%
-    summarize(zone.weight.total=sum(weight.per.zone,na.rm = T),
-              total.weight=sum(ind.fish.weight, na.rm=T),
-              family_n=n())%>%
-    mutate(avg.fish.weight=total.weight/family_n)%>%
-    rename(n.ind = family_n)
- head(zone.family.month)
+ #types of fish per month per gear, the weight of the fish, the number of fish, and the avg. fish weight
+ fish.species.gear.month <- fish.species %>% 
+   group_by(Year,Month,Gear,Species_latin_name)%>%
+   summarize(total.weight=sum(ind.fish.weight, na.rm=T),
+             Num.ind=n_distinct(Rec_ID))%>%
+   mutate(avg.fish.weight=total.weight/Num.ind)
+ head(fish.species.gear.month)
+ unique(fish.species.gear.month$Gear)
  
- #types of fish per zone per year, the weight of the fish, the number of fish, and the avg. fish weight
- zone.species.year.gear <- zones.fish.species.1 %>% 
-   group_by(Year,Gear,zone_id,Species_latin_name)%>%
-    summarize(zone.weight.total=sum(weight.per.zone,na.rm = T),
-              total.weight=sum(ind.fish.weight, na.rm=T),
-              Species_latin_name_n=n() )%>%
-    mutate(avg.fish.weight=total.weight/Species_latin_name_n)%>%
-    rename(n.ind = Species_latin_name_n)
- head(zone.species.year.gear)
+ #family breakdown per year per gear, the weight of the fish, and the number of fish
+ fish.family.gear.year <- fish.species %>% 
+   group_by(Year,Gear,family)%>%
+   summarize(total.weight=sum(ind.fish.weight, na.rm=T),
+             Num.ind=n_distinct(Rec_ID))
+ head(fish.family.gear.year)
+ unique(fish.family.gear.year$Gear)
  
- #types of fish per zone per month, the weight of the fish, the number of fish, and the avg. fish weight
- zone.species.month.gear <- zones.fish.species.1 %>% 
-   group_by(Year,Month,Gear, zone_id,Species_latin_name)%>%
-    summarize(zone.weight.total=sum(weight.per.zone,na.rm = T),
-              total.weight=sum(ind.fish.weight, na.rm=T),
-              Species_latin_name_n=n() )%>%
-    mutate(avg.fish.weight=total.weight/Species_latin_name_n)%>%
-    rename(n.ind = Species_latin_name_n)
- head(zone.species.month.gear)
- 
- #family breakdown per zone per year, the weight of the fish, the number of fish, and the avg. fish weight
- zone.family.year.gear <- zones.fish.species.1 %>% 
-   group_by(Year,Gear,zone_id,family)%>%
-    summarize(zone.weight.total=sum(weight.per.zone,na.rm = T),
-              total.weight=sum(ind.fish.weight, na.rm=T),
-              family_n=n())%>%
-    mutate(avg.fish.weight=total.weight/family_n)%>%
-    rename(n.ind = family_n)
- head(zone.family.year.gear)
- 
- #family breakdown per zone per month, the weight of the fish, the number of fish, and the avg. fish weight
- zone.family.month.gear <- zones.fish.species.1 %>% 
-   group_by(Year,Month,Gear, zone_id,family)%>%
-    summarize(zone.weight.total=sum(weight.per.zone,na.rm = T),
-              total.weight=sum(ind.fish.weight, na.rm=T),
-              family_n=n())%>%
-    mutate(avg.fish.weight=total.weight/family_n)%>%
-    rename(n.ind = family_n)
- head(zone.family.month.gear)
+ # family breakdown of fish caught per month per gear for each family, the number of individuals,and the total weight per family 
+ fish.family.gear.month <- fish.species %>% 
+   group_by(Year,Month,Gear,family)%>%
+   summarize(total.weight=sum(ind.fish.weight, na.rm=T),
+             Num.ind=n_distinct(Rec_ID))
+ head(fish.family.gear.month)
+ unique(fish.family.gear.month$Gear)
  
  ########################## adding zone areas and initial map making for fishing pressure #####################
- input.dir <- "/Users/gcullinan//OneDrive - Duke University/MP Project/spatial-fisheries-analysis/Data/"
+ gis.dir <- "/Users/gcullinan//OneDrive - Duke University/MP Project/spatial-fisheries-analysis/Data/"
  
- allfiles <- list.files(input.dir,recursive = T, full.names = T) 
+ allfiles <- list.files(gis.dir,recursive = T, full.names = T) 
  
  # Select kml files with 1) digit then 1 letter, 2) digit then 2 letters, 3) digit then .kml, 4) digit then buffer
  file.list <- c(grep("Zone_[0-9]{1}.kml",allfiles,value = T),
@@ -508,14 +478,13 @@ zones.fish.species.1 <- fish.GCRM.join  %>% #
  
  zone.ind <- st_read(file.list[1])
  zone.ind$zone_id <- as.character(gsub("Zone_","", zone.ind$Name)) # removes all non-digit characters
- #zone.ind$zone_id <- as.character(gsub(".kml","",zone.ind$Name)) # removes all non-digit characters
+ 
  
  for (i in (2:length(file.list))) {
    # retrieve kml 
    X <- st_read(file.list[i]) 
    # extract zone_id from file name 
    X$zone_id <- as.character(gsub("Zone_","", X$Name)) # removes all non-digit characters
-   #X$zone_id <- as.character(gsub(".kml","",X$zone_id)) # removes all non-digit characters
    # combine X to the previous shp
    zone.ind <- rbind(zone.ind,X) 
  }
@@ -530,7 +499,6 @@ zones.fish.species.1 <- fish.GCRM.join  %>% #
  
  zone.ind2 <- zone.ind %>% 
    left_join(fishing.zones, by = "zone_id")%>%
-   #mutate(area_m2 = as.numeric(area_m2))%>%
    mutate(area_km2 = area_m2/1000000)%>%
    mutate (fishing_pressure=weight.total/area_km2)%>%
    select(Name,zone_id,Year,area_m2,area_km2,weight.total,fishing_pressure, geometry)%>%
@@ -544,70 +512,71 @@ zones.fish.species.1 <- fish.GCRM.join  %>% #
  # Plot fishing pressure maps
  fish.zone.2012 <- ggplot() +
    geom_sf(data=filter(zone.ind2,Year==2012), aes(fill = fishing_pressure)) +
-   labs(title = paste0("2012"), x="Total landings per sqkm") +
+   scale_fill_gradient2(low="#f7fbff",high="#2171b5",name="Fishing Pressure",
+                        na.value="gray90",limits=c(0,max(zone.ind2$fishing_pressure))) +
+   labs(title = paste0("Map of Fishing Effort for 2012"), x="Total Landings per SqKm") +
    theme_bw()
  fish.zone.2013 <- ggplot() +
    geom_sf(data=filter(zone.ind2,Year==2013), aes(fill = fishing_pressure)) +
-   labs(title = paste0("2013"), x="Total landings per sqkm") +
+   scale_fill_gradient2(low="#f7fbff",high="#2171b5",name="Fishing Pressure",
+                        na.value="gray90",limits=c(0,max(zone.ind2$fishing_pressure))) +
+   labs(title = paste0("Map of Fishing Effort 2013"), x="Total Landings per SqKm") +
    theme_bw() 
  fish.zone.2014 <- ggplot() +
    geom_sf(data=filter(zone.ind2,Year==2014), aes(fill = fishing_pressure)) +
+   scale_fill_gradient2(low="#f7fbff",high="#2171b5",name="Fishing Pressure",
+                        na.value="gray90",limits=c(0,max(zone.ind2$fishing_pressure))) +
    labs(title = paste0("2014"), x="Total landings per sqkm") +
    theme_bw()
  fish.zone.2015 <- ggplot() +
    geom_sf(data=filter(zone.ind2,Year==2015), aes(fill = fishing_pressure)) +
-   labs(title = paste0("2015"), x="Total landings per sqkm") +
+   scale_fill_gradient2(low="#f7fbff",high="#2171b5",name="Fishing Pressure",
+                        na.value="gray90",limits=c(0,max(zone.ind2$fishing_pressure))) +
+   labs(title = paste0("Map of Fishing Effort for 2015"), x="Total landings per sqkm") +
    theme_bw()
  fish.zone.2016 <- ggplot() +
    geom_sf(data=filter(zone.ind2,Year==2016), aes(fill = fishing_pressure)) +
+   scale_fill_gradient2(low="#f7fbff",high="#2171b5",name="Fishing Pressure",
+                        na.value="gray90",limits=c(0,max(zone.ind2$fishing_pressure))) +
    labs(title = paste0("2016"), x="Total landings per sqkm") +
    theme_bw()
  fish.zone.2017 <- ggplot() +
    geom_sf(data=filter(zone.ind2,Year==2017), aes(fill = fishing_pressure)) +
-   labs(title = paste0("2017"), x="Total landings per sqkm") +
+   scale_fill_gradient2(low="#f7fbff",high="#2171b5",name="Fishing Pressure",
+                        na.value="gray90",limits=c(0,max(zone.ind2$fishing_pressure))) +
+   labs(title = paste0("2017"), x="Total Landings per SqKm") +
    theme_bw()
  fish.zone.2018 <- ggplot() +
    geom_sf(data=filter(zone.ind2,Year==2018), aes(fill = fishing_pressure)) +
+   scale_fill_gradient2(low="#f7fbff",high="#2171b5",name="Fishing Pressure",
+                        na.value="gray90",limits=c(0,max(zone.ind2$fishing_pressure))) +
    labs(title = paste0("2018"), x="Total landings per sqkm") +
    theme_bw()
  fish.zone.2019 <- ggplot() +
    geom_sf(data=filter(zone.ind2,Year==2019), aes(fill = fishing_pressure)) +
+   scale_fill_gradient2(low="#f7fbff",high="#2171b5",name="Fishing Pressure",
+                        na.value="gray90",limits=c(0,max(zone.ind2$fishing_pressure))) +
    labs(title = paste0("2019"), x="Total landings per sqkm") +
    theme_bw()
  plot_grid(fish.zone.2012,fish.zone.2013,fish.zone.2014, fish.zone.2015, fish.zone.2016, fish.zone.2017, fish.zone.2018, fish.zone.2019)
- 
+ plot(fish.zone.2012)
+ plot(fish.zone.2013)
+ plot(fish.zone.2014)
+ plot(fish.zone.2015)
+ plot(fish.zone.2016)
+ plot(fish.zone.2017)
+ plot(fish.zone.2018)
+ plot(fish.zone.2019)
  ######################### mapping lobster catch by individual count ###########################
- file.list <- c(grep("Zone_[0-9]{1}.kml",allfiles,value = T),
-                grep("FAD_[0-9]_[a-z]*",allfiles,value = T))
- 
- zone.ind <- st_read(file.list[1])
- zone.ind$zone_id <- as.character(gsub("Zone_","", zone.ind$Name)) # removes all non-digit characters
- #zone.ind$zone_id <- as.character(gsub(".kml","",zone.ind$Name)) # removes all non-digit characters
- 
- for (i in (2:length(file.list))) {
-    # retrieve kml 
-    X <- st_read(file.list[i]) 
-    # extract zone_id from file name 
-    X$zone_id <- as.character(gsub("Zone_","", X$Name)) # removes all non-digit characters
-    #X$zone_id <- as.character(gsub(".kml","",X$zone_id)) # removes all non-digit characters
-    # combine X to the previous shp
-    zone.ind <- rbind(zone.ind,X) 
- }
- # head map
- plot(st_geometry(zone.ind))
- # get area
- zone.ind$area_m2 <- as.numeric(st_area(zone.ind))
   # Example join
  lobster.zones <-zone.lob.year%>%
    mutate (zone_id = as.character(zone_id))
  
  zone.ind5 <- zone.ind %>% 
-   left_join(lobster.zones, by = "zone_id")%>%
-   #mutate(area_m2 = as.numeric(area_m2))%>%
+   inner_join(lobster.zones, by = "zone_id" )%>%
    mutate(area_km2 = area_m2/1000000)%>%
    mutate (lobster_pressure=ind.total/area_km2)%>%
    select(Name,zone_id,Year,area_m2,area_km2,ind.total,lobster_pressure, geometry)
-   #rename(weight_lb=weight.total)
  head(zone.ind5)
  
  zone.ind6 <- zone.ind5 %>% 
@@ -725,40 +694,88 @@ zones.fish.species.1 <- fish.GCRM.join  %>% #
     theme_bw()
  plot_grid(conch.zone.2012,conch.zone.2013,conch.zone.2014,conch.zone.2015,conch.zone.2016,conch.zone.2017,conch.zone.2018,conch.zone.2019)
  
- ##############################potential bar plots for family stats##############################
+ ############################## potential bar plots for family stats ##############################
 
-f.Acanthuridae<-subset(family.year, family=="Acanthuridae")
+unique(fish.family.year$family) 
 
- barplot(n.ind~Year, data=f.Acanthuridae)
+family.subset <- fish.family.year %>%
+  group_by(Year)%>%
+  filter(family %in% c("Acanthuridae","Lutjanidae","Scaridae","Serranidae"))
+head(family.subset)
+
+barplot(Num.ind~Year, data=family.subset)
  
- counts <- tapply(family.year$n.ind, list(family.year$Year, family.year$family), sum)
+ counts <- tapply(fish.family.year$Num.ind, list(fish.family.year$Year, fish.family.year$family), sum)
  barplot(counts, main="Number of Individuals Caught per Family per Year",
          xlab="Scientific Family Name", ylab="Number of Individuals", ylim=c(0, 2500),
          col=c("red", "orange","blue","darkblue","green", "darkgreen", "purple", "deeppink"),
          legend = rownames(counts), beside=TRUE,cex=.7, cex.axis=1, cex.lab =1.5,cex.main=2)
 
  
-family.year.group<-family.year[order(family.year$Year),] 
-family.year.group$color[family.year.group$Year==2012] <- "red"
-family.year.group$color[family.year.group$Year==2013] <- "orange"
-family.year.group$color[family.year.group$Year==2014] <- "blue"
-family.year.group$color[family.year.group$Year==2015] <- "darkblue"
-family.year.group$color[family.year.group$Year==2016] <- "green"
-family.year.group$color[family.year.group$Year==2017] <- "darkgreen"
-family.year.group$color[family.year.group$Year==2018] <- "purple"
-family.year.group$color[family.year.group$Year==2019] <- "deeppink"
+fish.family.year.group<-fish.family.year[order(fish.family.year$Year),] 
+fish.family.year.group$color[fish.family.year.group$Year==2012] <- "red"
+fish.family.year.group$color[fish.family.year.group$Year==2013] <- "orange"
+fish.family.year.group$color[fish.family.year.group$Year==2014] <- "blue"
+fish.family.year.group$color[fish.family.year.group$Year==2015] <- "darkblue"
+fish.family.year.group$color[fish.family.year.group$Year==2016] <- "green"
+fish.family.year.group$color[fish.family.year.group$Year==2017] <- "darkgreen"
+fish.family.year.group$color[fish.family.year.group$Year==2018] <- "purple"
+fish.family.year.group$color[fish.family.year.group$Year==2019] <- "deeppink"
 
-dotchart(family.year.group$n.ind, labels=family.year.group$family,cex=.7,
+dotchart(fish.family.year.group$Num.ind, labels=fish.family.year.group$family,cex=.7,
          cex.axis=1.25, cex.lab =2,cex.main=2, 
-         groups = family.year.group$Year, gcolor="black", color=family.year.group$color)
+         groups = fish.family.year.group$Year, gcolor="black", color=fish.family.year.group$color)
+
+############################### families of interest plots ########################################
+
+family.counts <- tapply(family.subset$Num.ind, list(family.subset$Year, family.subset$family), sum)
+barplot(family.counts, main="Number of Individuals Caught per Family per Year",
+        xlab="Scientific Family Name", ylab="Number of Individuals", ylim=c(0, 2500),
+        col=c("red", "orange","blue","darkblue","green", "darkgreen", "purple", "deeppink"),
+        legend = rownames(family.counts), beside=TRUE,cex=.7, cex.axis=1, cex.lab =1.5,cex.main=2)
+
+fish.subset.group<-family.subset[order(family.subset$Year),] 
+fish.subset.group$color[fish.subset.group$Year==2012] <- "red"
+fish.subset.group$color[fish.subset.group$Year==2013] <- "orange"
+fish.subset.group$color[fish.subset.group$Year==2014] <- "blue"
+fish.subset.group$color[fish.subset.group$Year==2015] <- "darkblue"
+fish.subset.group$color[fish.subset.group$Year==2016] <- "green"
+fish.subset.group$color[fish.subset.group$Year==2017] <- "darkgreen"
+fish.subset.group$color[fish.subset.group$Year==2018] <- "purple"
+fish.subset.group$color[fish.subset.group$Year==2019] <- "deeppink"
+
+dotchart(fish.subset.group$Num.ind, labels=fish.subset.group$family,cex=.7,
+         cex.axis=1.25, cex.lab =2,cex.main=2, 
+         groups = fish.subset.group$Year, gcolor="black", color=fish.subset.group$color)
+######################## analysis of percentage composition of fish species ########################
+
+#fish.GCRM.join.pct <-log.data.F %>% 
+#  left_join(GCRM.data.Fish, by = "Species_latin_name" )%>%
+#  filter(!is.na(Trip_ID)) %>% 
+#  mutate(ind.fish.weight = ((a*Length_.cm.)^b)*TL2FL) 
+
+unique(fish.species$Gear)
+
+fish.GCRM.join.gear <-  fish.species %>% 
+  group_by(Gear) %>% 
+  summarise(gear.sum.wt=sum(ind.fish.weight, na.rm=T))
+head(fish.GCRM.join.gear)
+
+fish.GCRM.join.gear.family <- fish.species %>% 
+  group_by(Gear,family) %>% 
+  summarise(sum.weight=sum(ind.fish.weight, na.rm=T)) %>% 
+  left_join(fish.GCRM.join.gear, by="Gear") %>% 
+  mutate(pct.wt=sum.weight/gear.sum.wt*100)
+head(fish.GCRM.join.gear.family)
  
- 
- 
- 
- 
- 
- 
- 
+family.percent.gear.comp <- family.year.gear %>%
+  mutate(percent.comp = Count/sum(Count)*100)
+head(family.percent.gear.comp)
+
+family.percent.gear.weight <- fish.family.gear.year %>%
+  mutate(percent.weight = total.weight/sum(total.weight)*100)
+head(family.percent.gear.weight)
+  
  
  
  
