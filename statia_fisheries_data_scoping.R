@@ -181,7 +181,24 @@ unique(log.data.F$Gear)
 unique(log.data.F$Species_latin_name)
 log.data.F$Species_latin_name <- ifelse(log.data.F$Species_latin_name %in% c("Lactophrys polygonia"), "Acanthostracion polygonia",log.data.F$Species_latin_name)
 log.data.F$Species_latin_name <- ifelse(log.data.F$Species_latin_name %in% c("Canthiderhines macrocerus"), "Cantherhines macrocerus",log.data.F$Species_latin_name)
-log.data.F$Species_latin_name <- ifelse(log.data.F$Species_latin_name %in% c("Cephalophilis fulva"), "Cephalopholis fulva",log.data.F$Species_latin_name)
+log.data.F$Species_latin_name <- ifelse(log.data.F$Species_latin_name %in% c("Cephalophilis fulva","Epinephelus fulvus"), "Cephalopholis fulva",log.data.F$Species_latin_name)
+log.data.F$Species_latin_name <- ifelse(log.data.F$Species_latin_name %in% c("Alectris ciliaris"), "Alectis ciliaris",log.data.F$Species_latin_name)
+log.data.F$Species_latin_name <- ifelse(log.data.F$Species_latin_name %in% c("caranx latus"), "Caranx latus",log.data.F$Species_latin_name)
+log.data.F$Species_latin_name <- ifelse(log.data.F$Species_latin_name %in% c("Aluterus schoepfi"), "Aluterus schoepfii",log.data.F$Species_latin_name)
+log.data.F$Species_latin_name <- ifelse(log.data.F$Species_latin_name %in% c("caranx lugubris"), "Caranx lugubris",log.data.F$Species_latin_name)
+log.data.F$Species_latin_name <- ifelse(log.data.F$Species_latin_name %in% c("Corypahaena hippurus"), "Coryphaena hippurus",log.data.F$Species_latin_name)
+log.data.F$Species_latin_name <- ifelse(log.data.F$Species_latin_name %in% c("Epinephelus cruentatus"), "Cephalopholis cruentata",log.data.F$Species_latin_name)
+log.data.F$Species_latin_name <- ifelse(log.data.F$Species_latin_name %in% c("Epinephelus stritatus"), "Epinephelus striatus",log.data.F$Species_latin_name)
+log.data.F$Species_latin_name <- ifelse(log.data.F$Species_latin_name %in% c("Euthynnuss pelamis"), "Katsuwonus pelamis",log.data.F$Species_latin_name)
+log.data.F$Species_latin_name <- ifelse(log.data.F$Species_latin_name %in% c("Haemulon plumierii"), "Haemulon plumieri",log.data.F$Species_latin_name)
+log.data.F$Species_latin_name <- ifelse(log.data.F$Species_latin_name %in% c("Haemulon striatus"), "Haemulon striatum",log.data.F$Species_latin_name)
+log.data.F$Species_latin_name <- ifelse(log.data.F$Species_latin_name %in% c("Holocanthus ciliaris"), "Holacanthus ciliaris",log.data.F$Species_latin_name)
+log.data.F$Species_latin_name <- ifelse(log.data.F$Species_latin_name %in% c("Lactophrys quadricornis"), "Acanthostracion quadricornis",log.data.F$Species_latin_name)
+log.data.F$Species_latin_name <- ifelse(log.data.F$Species_latin_name %in% c("Lutjanus Buccanella"), "Lutjanus buccanella",log.data.F$Species_latin_name)
+log.data.F$Species_latin_name <- ifelse(log.data.F$Species_latin_name %in% c("Pteris volitans"), "Pterois volitans",log.data.F$Species_latin_name)
+log.data.F$Species_latin_name <- ifelse(log.data.F$Species_latin_name %in% c("Scarus iserti"), "Scarus iseri",log.data.F$Species_latin_name)
+log.data.F$Species_latin_name <- ifelse(log.data.F$Species_latin_name %in% c("Selar crumenphthalamus"), "Selar crumenophthalmus",log.data.F$Species_latin_name)
+
 unique(log.data.F$Species_latin_name)
 
 log.data.L <-log.data.Lobster %>% # create the join data and filter it by year to limit the observations
@@ -335,8 +352,7 @@ zones.lob <- log.data %>% #rename the lobster zones from the log data
    mutate(avg.ind.per.trip=ind.total/Num.Trips)
  head(zone.conch.gear.month)  
  
- ####################################### Fish Data by Species #########################
- 
+####################################### Fish Data by Species #########################
  #join with GCRM table and look at this for the family level and do the same thing donw below with the gear types
  GCRM.data.Fish <- import(paste0(input.dir,"GCRMN FISH BIOMASS DATA EUX 2018.xlsx"),
                           which = 6, skip =0, .name_repair="universal")   #import sheet for fish LW values
@@ -349,7 +365,7 @@ zones.lob <- log.data %>% #rename the lobster zones from the log data
    summarise(a=mean(a), b=mean(b), TL2FL=mean(TL2FL))
  
  # check to see if names line up
- log.data.F %>% 
+ log.data.F.antijoin <- log.data.F %>% 
    select(Species_common_name, Species_latin_name) %>% 
    anti_join(GCRM.data.Fish, by = "Species_latin_name") %>% 
    distinct(Species_latin_name)
@@ -375,7 +391,6 @@ fish.species <- fish.GCRM.join  %>% #create a data set that has each individual 
          species.num=n_distinct(Species_latin_name))
   head(fish.species)
 
-  
 # average weight by species
   mean.fish.weight <- fish.species %>% 
     group_by(Species_latin_name,trophic,family) %>% 
