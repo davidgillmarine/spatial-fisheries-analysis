@@ -35,8 +35,10 @@ log.data$Landings <- ifelse(log.data$Landings %in% c("Whelk","Whelks"), "Whelk",
 unique(log.data$Landings) #check
 
 log.data <- log.data %>% 
-  mutate(Num_ind=as.numeric(Num_ind)) %>% 
-  mutate(Trip_ID=as.character(Trip_ID)) 
+  mutate(Num_ind=as.numeric(Num_ind),
+         Trip_ID=as.character(Trip_ID),
+         `Weight_(Lbs)`=`Weight_(Lbs)`/2.2,
+         in.park=ifelse(`max_(m)`<=30, 1,0)) 
   
 
 #################### Breaking out the data by year, and month, and by gear. And by fish, lobster and conch #############
@@ -384,64 +386,105 @@ unique(fish.GCRM.join$Gear) #make sure that the gears are still correct with no 
 fish.species <- fish.GCRM.join  %>% #create a data set that has each individual fish weight calculated and organized by Rec_ID
   select(Sample_ID,Rec_ID,Year,Month,Day,Gear, Species_common_name,Species_latin_name,family,Length_.cm.,FL.TL, TL2FL, a, b, trophic) %>% 
   mutate(Rec_ID=as.numeric(Rec_ID))%>% #change from character to numeric 
-  mutate(ind.fish.weight = ifelse(FL.TL=="TL",((a*Length_.cm.*TL2FL)^b),(a*Length_.cm.)^b))%>%
-  group_by(Sample_ID, family, trophic)%>%
+ # mutate(ind.fish.weight = ifelse(FL.TL=="TL",((a*Length_.cm.*TL2FL)^b),(a*Length_.cm.)^b)) %>%
+  mutate(ind.fish.weight = ifelse(FL.TL=="TL",
+                                  exp(log(a) + (b * log(Length_.cm.*TL2FL))),
+                                  exp(log(a) + (b * log(Length_.cm.)))),
+         ind.fish.weight=ind.fish.weight/1000) %>%
+  group_by(Sample_ID)%>%
   mutate(trip.wt=sum(ind.fish.weight,na.rm = T),
          rec.num=n(),
-         species.num=n_distinct(Species_latin_name))
+         species.num=n_distinct(Species_latin_name),
+         prop.wt=ind.fish.weight/trip.wt)
   head(fish.species)
-
-# average weight by species
-  mean.fish.weight <- fish.species %>% 
-    group_by(Species_latin_name,trophic,family) %>% 
-    summarise(mean.fish.weight=mean(ind.fish.weight,na.rm = T))
-  head(mean.fish.weight)
   
-#types of fish per year, the weight of the fish, the number of fish, and the avg. fish weight, 
-# and the proportion of the catch by species and by weight
- fish.species.year <- fish.species %>% 
-   group_by(Sample_ID, Year, Species_latin_name,rec.num, trip.wt, family, trophic)%>%
-   summarize(spec.sum.wt=sum(ind.fish.weight, na.rm=T),
-             Num.ind=n())%>%
-  # mutate(avg.fish.wt=spec.sum.wt/Num.ind)%>%
-   mutate(pct.spec = (Num.ind/rec.num) *100)%>%
-   mutate(pct.wt = (spec.sum.wt/trip.wt)*100)
- head(fish.species.year)
- 
- #calculating the means for each species fish weight, species composition, and composition weight
- species.mean.year<-fish.species.year%>%
-   group_by(Year,Species_latin_name)%>%
-   filter(!is.na(pct.wt))%>%
-   summarise(mean.avg.fish.wt=mean(avg.fish.wt), 
-             mean.pct.spec=mean(pct.spec),
-             mean.pct.wt=mean(pct.wt))
- head(species.mean.year)
+  
+  # Proportion weight by family
+  prop.fam.weight <- fish.species %>% 
+    group_by(Sample_ID,trophic,family) %>% 
+    summarise(prop.wt=sum(prop.wt,na.rm = T)) %>% 
+    group_by(trophic,family) %>% 
+    summarise(prop.wt=mean(prop.wt,na.rm = T)) %>% 
+    filter(!is.na(family))
+    
+  head(prop.fam.weight)
 
- #types of fish per year, the weight of the fish, the number of fish, and the avg. fish weight, 
- #and the proportion of the catch by species and by weight for each gear
- fish.species.gear.year <- fish.species %>% 
-   group_by(Sample_ID, Year, Gear,Species_latin_name,rec.num, trip.wt)%>%
-   summarize(gear.sum.wt=sum(ind.fish.weight, na.rm=T),
-             Num.ind=n_distinct(Rec_ID))%>%
-   mutate(avg.gear.wt=gear.sum.wt/Num.ind)%>%
-   mutate(pct.spec = (Num.ind/rec.num) *100)%>%
-   mutate(pct.wt = (gear.sum.wt/trip.wt)*100)
- head(fish.species.gear.year)
+  
+  # Proportion weight by family, gear
+  prop.fam.gear.weight <- fish.species %>% 
+    group_by(Sample_ID,Gear,trophic,family) %>% 
+    summarise(prop.wt=sum(prop.wt,na.rm = T)) %>% 
+    group_by(trophic,Gear,family) %>% 
+    summarise(prop.wt=mean(prop.wt,na.rm = T), num.samples=n()) %>% 
+    filter(!is.na(family) & !is.na(Gear))
+  head(prop.fam.gear.weight)  
+
+  
+  # Proportion weight by trophic group
+  prop.fam.gear.weight <- fish.species %>% 
+    group_by(Sample_ID,Gear,trophic) %>% 
+    summarise(prop.wt=sum(prop.wt,na.rm = T)) %>% 
+    group_by(trophic,Gear) %>% 
+    summarise(prop.wt=mean(prop.wt,na.rm = T), num.samples=n()) %>% 
+    filter(!is.na(trophic) & !is.na(Gear))
+  head(prop.fam.gear.weight) 
+  
+ # Mean weight by Year by species
  
- #types of fish per year, the weight of the fish, the number of fish, and the avg. fish weight, 
- #and the proportion of the catch by family 
- fish.family.year <- fish.species %>% 
-   group_by(Sample_ID, Year, family,rec.num, trip.wt)%>%
-   summarize(spec.sum.wt=sum(ind.fish.weight, na.rm=T),
-             Num.ind=n_distinct(Rec_ID))%>%
-   mutate(avg.fish.wt=spec.sum.wt/Num.ind)%>%
-   mutate(pct.spec = (Num.ind/rec.num) *100)%>%
-   mutate(pct.wt = (spec.sum.wt/trip.wt)*100)
- head(fish.family.year)
+ # Mean weight by Year by family
+  
+
+# # average weight by species
+#   mean.fish.weight <- fish.species %>% 
+#     group_by(Species_latin_name,trophic,family) %>% 
+#     summarise(mean.fish.weight=mean(ind.fish.weight,na.rm = T))
+#   head(mean.fish.weight)
+#   
+# #types of fish per year, the weight of the fish, the number of fish, and the avg. fish weight, 
+# # and the proportion of the catch by species and by weight
+#  fish.species.year <- fish.species %>% 
+#    group_by(Sample_ID, Year, Species_latin_name,rec.num, trip.wt, family, trophic)%>%
+#    summarize(spec.sum.wt=sum(ind.fish.weight, na.rm=T),
+#              Num.ind=n())%>%
+#   # mutate(avg.fish.wt=spec.sum.wt/Num.ind)%>%
+#    mutate(pct.spec = (Num.ind/rec.num) *100)%>%
+#    mutate(pct.wt = (spec.sum.wt/trip.wt)*100)
+#  head(fish.species.year)
+#  
+#  #calculating the means for each species fish weight, species composition, and composition weight
+#  species.mean.year<-fish.species.year%>%
+#    group_by(Year,Species_latin_name)%>%
+#    filter(!is.na(pct.wt))%>%
+#    summarise(mean.avg.fish.wt=mean(avg.fish.wt), 
+#              mean.pct.spec=mean(pct.spec),
+#              mean.pct.wt=mean(pct.wt))
+#  head(species.mean.year)
+# 
+#  #types of fish per year, the weight of the fish, the number of fish, and the avg. fish weight, 
+#  #and the proportion of the catch by species and by weight for each gear
+#  fish.species.gear.year <- fish.species %>% 
+#    group_by(Sample_ID, Year, Gear,Species_latin_name,rec.num, trip.wt)%>%
+#    summarize(gear.sum.wt=sum(ind.fish.weight, na.rm=T),
+#              Num.ind=n_distinct(Rec_ID))%>%
+#    mutate(avg.gear.wt=gear.sum.wt/Num.ind)%>%
+#    mutate(pct.spec = (Num.ind/rec.num) *100)%>%
+#    mutate(pct.wt = (gear.sum.wt/trip.wt)*100)
+#  head(fish.species.gear.year)
+#  
+#  #types of fish per year, the weight of the fish, the number of fish, and the avg. fish weight, 
+#  #and the proportion of the catch by family 
+#  fish.family.year <- fish.species %>% 
+#    group_by(Sample_ID, Year, family,rec.num, trip.wt)%>%
+#    summarize(spec.sum.wt=sum(ind.fish.weight, na.rm=T),
+#              Num.ind=n_distinct(Rec_ID))%>%
+#    mutate(avg.fish.wt=spec.sum.wt/Num.ind)%>%
+#    mutate(pct.spec = (Num.ind/rec.num) *100)%>%
+#    mutate(pct.wt = (spec.sum.wt/trip.wt)*100)
+#  head(fish.family.year)
  
  ########################## adding zone areas and initial map making for fishing pressure #####################
  gis.dir <- "/Users/gcullinan//OneDrive - Duke University/MP Project/spatial-fisheries-analysis/Data/"
- 
+gis.dir <-"R:/Gill/spatial-fisheries-analysis/tables/raw/Fisheries_Zones"
  allfiles <- list.files(gis.dir,recursive = T, full.names = T) 
  
  # Select kml files with 1) digit then 1 letter, 2) digit then 2 letters, 3) digit then .kml, 4) digit then buffer
@@ -543,6 +586,10 @@ fish.species <- fish.GCRM.join  %>% #create a data set that has each individual 
  plot(fish.zone.2017)
  plot(fish.zone.2018)
  plot(fish.zone.2019)
+ 
+ # saving files
+ #ggsave(paste0(plotdir,today.date,'_PCA_NTvMU_all_covariates.jpg'),width = 10,height = 18)
+ 
  ######################### mapping lobster catch by individual count ###########################
   # Example join
  lobster.zones <-zone.lob.year%>%
