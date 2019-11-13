@@ -6,10 +6,9 @@ library(ggplot2)
 library(cowplot)
 library(tidyverse)
 
-
 ###################################### Import the Data ##############################
-#input.dir <- '~/OneDrive - Duke University/MP Project/spatial-fisheries-analysis/Data/' #set the import directory
-input.dir <- 'R:/Gill/spatial-fisheries-analysis/tables/raw/' #set the import directory
+input.dir <- '~/OneDrive - Duke University/MP Project/spatial-fisheries-analysis/Data/' #set the import directory
+#input.dir <- 'R:/Gill/spatial-fisheries-analysis/tables/raw/' #set the import directory
 log.data.total <- import(paste0(input.dir,"Statia logbook Raw data last update Feb 8 2019.xlsx"), #import the correct file and the page of the fisheries 
                    which = 1, skip =1)                                                            #spreadsheet and tell it where to start from the top
 
@@ -384,11 +383,12 @@ unique(fish.GCRM.join$Gear) #make sure that the gears are still correct with no 
 fish.species <- fish.GCRM.join  %>% #create a data set that has each individual fish weight calculated and organized by Rec_ID
   select(Sample_ID,Rec_ID,Year,Month,Day,Gear, Species_common_name,Species_latin_name,family,Length_.cm.,FL.TL, TL2FL, a, b, trophic) %>% 
   mutate(Rec_ID=as.numeric(Rec_ID))%>% #change from character to numeric 
-  mutate(ind.fish.weight = ifelse(FL.TL=="TL",((a*Length_.cm.*TL2FL)^b),(a*Length_.cm.)^b))%>%
-  group_by(Sample_ID, family, trophic)%>%
+  mutate(ind.fish.weight = ifelse(FL.TL=="TL",((a*((Length_.cm.*TL2FL)^b))/1000),(a*((Length_.cm.)^b))/1000))%>%
+  group_by(Sample_ID)%>%
   mutate(trip.wt=sum(ind.fish.weight,na.rm = T),
          rec.num=n(),
-         species.num=n_distinct(Species_latin_name))
+         species.num=n_distinct(Species_latin_name),
+         pct.wt = (ind.fish.weight/trip.wt)*100)
   head(fish.species)
 
 # average weight by species
@@ -441,7 +441,7 @@ fish.species <- fish.GCRM.join  %>% #create a data set that has each individual 
  
  ########################## adding zone areas and initial map making for fishing pressure #####################
  gis.dir <- "/Users/gcullinan//OneDrive - Duke University/MP Project/spatial-fisheries-analysis/Data/"
- 
+ #gis.dir <- 'R:/Gill/spatial-fisheries-analysis/tables/raw/' #set the import directory
  allfiles <- list.files(gis.dir,recursive = T, full.names = T) 
  
  # Select kml files with 1) digit then 1 letter, 2) digit then 2 letters, 3) digit then .kml, 4) digit then buffer
@@ -543,6 +543,8 @@ fish.species <- fish.GCRM.join  %>% #create a data set that has each individual 
  plot(fish.zone.2017)
  plot(fish.zone.2018)
  plot(fish.zone.2019)
+ 
+
  ######################### mapping lobster catch by individual count ###########################
   # Example join
  lobster.zones <-zone.lob.year%>%
