@@ -39,7 +39,6 @@ log.data <- log.data %>%
          `Weight_(Lbs)`=`Weight_(Lbs)`/2.2,
          in.park=ifelse(`max_(m)`<=30, 1,0)) 
   
-
 #################### Breaking out the data by year, and month, and by gear. And by fish, lobster and conch #############
 trips.year <- log.data %>%    # looking at the number of trips per year 
   group_by(Year) %>%           #group by the relevent groups
@@ -150,15 +149,12 @@ conch.gear.month <- log.data %>%    #looking at the amount of queen conch caught
   filter(Landings=="Queen Conch") %>%
   summarize(Num_conch = sum(Num_ind, na.rm=TRUE))
   
-  
 ####################### reading logbook entries for fish, lobster, and conch #############
 # reading in the fish, lobster and conch sample pages of the log book and replacing unusual characters
 
 log.data.Fish <- import(paste0(input.dir,"Statia logbook Raw data last update Feb 8 2019.xlsx"), 
                          which = 2, skip =0, .name_repair="universal")   #import sheet for fish data
 names(log.data.Fish)  #check the names 
-
-
 
 log.data.Lobster <- import(paste0(input.dir,"Statia logbook Raw data last update Feb 8 2019.xlsx"),
                          which = 3, skip =0, .name_repair="universal") # import sheet for lobster data
@@ -208,14 +204,14 @@ log.data.L <-log.data.Lobster %>% # create the join data and filter it by year t
 names(log.data.L)
 
 log.data.C <- log.data.Conch %>% #create the join data and filter it by year to limit the observations
-  rename(Trip_ID = Rec_ID) %>% # rename this variable
+  mutate(Rec_ID=as.character(Rec_ID)) %>% # rename this variable
   filter(!is.na(Year))
 names(log.data.C)
 
 ###################################### Zone Analysis For Fish ##########################################
 head(zones.fish)
 zones.fish <- log.data %>% #rename variable to zone.fish
-  select(Rec_ID,Trip_ID,Year,Month,Day,Z1:Z6,Landings,Gear,`Weight_(Lbs)`) %>% #select relevent variables
+  select(Rec_ID,Trip_ID,Year,Month,Day,Z1:Z6,Landings,Gear,`Weight_(Lbs)`,`max_(m)`,in.park) %>% #select relevent variables
   mutate(n.zones=rowSums(!is.na(select(., Z1:Z6)))) %>% #mutate and keep new variable as n.zones
   gather(key="zone.total",value="zone_id",Z1:Z6) %>% #bring these values together, and sum and rename them
   filter(!is.na(zone_id)) %>%     #filter by zone ID and remove NAs
@@ -227,9 +223,9 @@ head(zones.fish)   #check to make sure it was ordered properly
 #amount of fish per zone per year, the number of trips, and the average number of fish per trip
 zone.fish.year <- zones.fish %>% #rename variable to zone.fish.year for analysis
  group_by(Year,zone_id)%>%  #group by the year, landings, and the zone ID
- summarize(weight.total=sum(weight.per.zone,na.rm = T),
+ summarize(weight.total=sum(weight.per.zone,na.rm = T), #summerize by the total amount fo fish caught in that zone for that year
            Num.Trips=n_distinct(Trip_ID))%>%
-  mutate(avg.weight.per.trip=weight.total/Num.Trips)#summerize by the total amount fo fish caught in that zone for that year
+  mutate(avg.weight.per.trip=weight.total/Num.Trips) #calculate the average catch per trip
 head(zone.fish.year)
 
 #amount of fish per zone per month, the number of trips, and the average number of fish per trip
@@ -256,19 +252,34 @@ zone.fish.gear.month<-zones.fish %>%
   mutate(avg.weight.per.trip=weight.total/Num.Trips)
 head(zone.fish.gear.month)  
 
+#looking at the amount of fish caught within the park, aka from 0-30m in depth for each year and by zone
+zone.fish.inpark.year <-zones.fish%>%
+  group_by(Year, zone_id,in.park)%>%
+  summarize(weight.total=sum(weight.per.zone,na.rm=T),
+            Num.Trips=n_distinct(Trip_ID))%>%
+  filter(in.park==1)
+head(zone.fish.inpark.year)
+
+#looking at the amount of fish caught within the park, aka from 0-30m in depth, for each year, by gear and zone
+zone.fish.inpark.gear.year <-zones.fish%>%
+  group_by(Year, Gear,zone_id,in.park)%>%
+  summarize(weight.total=sum(weight.per.zone,na.rm=T),
+            Num.Trips=n_distinct(Trip_ID))%>%
+  filter(in.park==1)
+head(zone.fish.inpark.gear.year)
 ################################## Zone Analysis for Lobsters ####################################
 #lobsters are done as number of individuals since that is how they were recorded
 #except for a few select records potentially, accidentally done by weight 
 
 names(log.data) #check the names for the data as a whole
 zones.lob <- log.data %>% #rename the lobster zones from the log data
-  select(Rec_ID,Trip_ID,Year,Month,Day,Z1:Z6,Landings,Gear, `Num_ind`) %>% #select the correct variables
+  select(Rec_ID,Trip_ID,Year,Month,Day,Z1:Z6,Landings,Gear, `Num_ind`,`max_(m)`,in.park) %>% #select the correct variables
   mutate(n.zones=rowSums(!is.na(select(., Z1:Z6)))) %>% 
   gather(key="zone.total",value="zone_id",Z1:Z6) %>% 
   filter(!is.na(zone_id))%>%
   mutate(ind.per.zone= Num_ind/n.zones) %>% 
-  filter(Landings=="Spiny Lobster")
-  #arrange(Trip_ID)
+  filter(Landings=="Spiny Lobster")%>%
+  arrange(Rec_ID)
  head(zones.lob) #check your work
 
  #number of lobsters per zone per year, the number of trips per zone, and the average number of lobster caught per trip
@@ -278,7 +289,6 @@ zones.lob <- log.data %>% #rename the lobster zones from the log data
              Num.Trips=n_distinct(Trip_ID))%>%
    mutate(avg.ind.per.trip=ind.total/Num.Trips)
  head(zone.lob.year)
- 
  
  #number of lobsters per zone per month, the number of trips per zone, and the average number of lobsters caught per trip
  zone.lob.month <- zones.lob %>% 
@@ -304,14 +314,29 @@ zones.lob <- log.data %>% #rename the lobster zones from the log data
    mutate(avg.ind.per.trip=ind.total/Num.Trips)
  head(zone.lob.gear.month)  
  
-
+ # number of lobsters caught within the marine park for each year and zone 
+ zone.lob.inpark.year <-zones.lob%>%
+   group_by(Year, zone_id,in.park)%>%
+   summarize(ind.total=sum(ind.per.zone,na.rm=T),
+             Num.Trips=n_distinct(Trip_ID))%>%
+   filter(in.park==1)
+ head(zone.lob.inpark.year)
+ 
+ # number of lobsters caught within the marine park for each year and gear type
+ zone.lob.inpark.gear.year <-zones.lob%>%
+   group_by(Year, Gear,zone_id,in.park)%>%
+   summarize(ind.total=sum(ind.per.zone,na.rm=T),
+             Num.Trips=n_distinct(Trip_ID))%>%
+   filter(in.park==1)
+ head(zone.lob.inpark.gear.year)
+ 
 ##################################### Zone Analysis for Queen Conch #############################
  #Queen Conch are done as number of individuals since that is how they were recorded
  #except for a few select records potencially accidentally done by weight 
  
  names(log.data)
  zones.conch <- log.data %>% 
-   select(Rec_ID,Trip_ID,Year,Month,Day,Z1:Z6,Landings,Gear,`Num_ind`) %>% 
+   select(Rec_ID,Trip_ID,Year,Month,Day,Z1:Z6,Landings,Gear,`Num_ind`, `max_(m)`,in.park) %>% 
    mutate(n.zones=rowSums(!is.na(select(., Z1:Z6)))) %>% 
    gather(key="zone.total",value="zone_id",Z1:Z6) %>% 
    filter(!is.na(zone_id))%>%
@@ -353,10 +378,27 @@ zones.lob <- log.data %>% #rename the lobster zones from the log data
    mutate(avg.ind.per.trip=ind.total/Num.Trips)
  head(zone.conch.gear.month)  
  
+ # number of Queen conch caught within the marine park for each year and zone 
+ zone.conch.inpark.year <-zones.conch%>%
+   group_by(Year, zone_id,in.park)%>%
+   summarize(ind.total=sum(ind.per.zone,na.rm=T),
+             Num.Trips=n_distinct(Trip_ID))%>%
+   filter(in.park==1)
+ head(zone.conch.inpark.year)
+ 
+ # number of Queen conch caught within the marine park for each year and gear type
+ zone.conch.inpark.gear.year <-zones.conch%>%
+   group_by(Year, Gear,zone_id,in.park)%>%
+   summarize(ind.total=sum(ind.per.zone,na.rm=T),
+             Num.Trips=n_distinct(Trip_ID))%>%
+   filter(in.park==1)
+ head(zone.conch.inpark.gear.year)
+ 
 ####################################### Fish Data by Species #########################
  #join with GCRM table and look at this for the family level and do the same thing donw below with the gear types
  GCRM.data.Fish <- import(paste0(input.dir,"GCRMN FISH BIOMASS DATA EUX 2018.xlsx"),
                           which = 6, skip =0, .name_repair="universal")   #import sheet for fish LW values
+ 
  names(GCRM.data.Fish) #check the names
  
  #rename this variable for consistency across other sheets and variables
@@ -371,7 +413,6 @@ zones.lob <- log.data %>% #rename the lobster zones from the log data
    anti_join(GCRM.data.Fish, by = "Species_latin_name") %>% 
    distinct(Species_latin_name)
  
-
 #join the coral reef monitoring species data to the fish data in order to assess effort by family
  fish.GCRM.join <-log.data.F %>% 
    left_join(GCRM.data.Fish, by = "Species_latin_name" )%>%
@@ -381,121 +422,132 @@ tail(fish.GCRM.join) #check the bottom to see if it joined correctly
 names(fish.GCRM.join) #check the names to get the correct names for each variable 
 unique(fish.GCRM.join$Gear) #make sure that the gears are still correct with no mispellings
 
-
 fish.species <- fish.GCRM.join  %>% #create a data set that has each individual fish weight calculated and organized by Rec_ID
-  select(Sample_ID,Rec_ID,Year,Month,Day,Gear, Species_common_name,Species_latin_name,family,Length_.cm.,FL.TL, TL2FL, a, b, trophic) %>% 
+  select(Sample_ID,Rec_ID,Year,Month,Day,Gear, Species_common_name,Species_latin_name,family,
+         Length_.cm.,FL.TL, TL2FL, a, b, trophic) %>% 
   mutate(Rec_ID=as.numeric(Rec_ID))%>% #change from character to numeric 
-<<<<<<< HEAD
   mutate(ind.fish.weight = ifelse(FL.TL=="TL",((a*((Length_.cm.*TL2FL)^b))/1000),(a*((Length_.cm.)^b))/1000))%>%
-=======
- # mutate(ind.fish.weight = ifelse(FL.TL=="TL",((a*Length_.cm.*TL2FL)^b),(a*Length_.cm.)^b)) %>%
-  mutate(ind.fish.weight = ifelse(FL.TL=="TL",
-                                  exp(log(a) + (b * log(Length_.cm.*TL2FL))),
-                                  exp(log(a) + (b * log(Length_.cm.)))),
-         ind.fish.weight=ind.fish.weight/1000) %>%
->>>>>>> 61f4c0c521ddbb8690c8598762b2c30d8b02fe79
   group_by(Sample_ID)%>%
   mutate(trip.wt=sum(ind.fish.weight,na.rm = T),
          rec.num=n(),
          species.num=n_distinct(Species_latin_name),
-<<<<<<< HEAD
-         pct.wt = (ind.fish.weight/trip.wt)*100)
-=======
+         pct.wt = (ind.fish.weight/trip.wt)*100,
          prop.wt=ind.fish.weight/trip.wt)
->>>>>>> 61f4c0c521ddbb8690c8598762b2c30d8b02fe79
-  head(fish.species)
+head(fish.species)
   
-  
-  # Proportion weight by family
-  prop.fam.weight <- fish.species %>% 
+# Proportion weight by family
+prop.fam.weight <- fish.species %>% 
     group_by(Sample_ID,trophic,family) %>% 
     summarise(prop.wt=sum(prop.wt,na.rm = T)) %>% 
     group_by(trophic,family) %>% 
-    summarise(prop.wt=mean(prop.wt,na.rm = T)) %>% 
+    summarise(prop.wt=mean(prop.wt,na.rm = T),num.samples=n()) %>% 
     filter(!is.na(family))
-    
-  head(prop.fam.weight)
+head(prop.fam.weight)
 
-  
-  # Proportion weight by family, gear
-  prop.fam.gear.weight <- fish.species %>% 
+# Proportion weight by family, gear
+prop.fam.gear.weight <- fish.species %>% 
     group_by(Sample_ID,Gear,trophic,family) %>% 
     summarise(prop.wt=sum(prop.wt,na.rm = T)) %>% 
     group_by(trophic,Gear,family) %>% 
     summarise(prop.wt=mean(prop.wt,na.rm = T), num.samples=n()) %>% 
     filter(!is.na(family) & !is.na(Gear))
-  head(prop.fam.gear.weight)  
+head(prop.fam.gear.weight)  
 
-  
-  # Proportion weight by trophic group
-  prop.fam.gear.weight <- fish.species %>% 
-    group_by(Sample_ID,Gear,trophic) %>% 
+# Proportion weight by trophic group
+prop.troph.weight <- fish.species %>% 
+    group_by(Sample_ID,trophic) %>% 
     summarise(prop.wt=sum(prop.wt,na.rm = T)) %>% 
-    group_by(trophic,Gear) %>% 
+    group_by(trophic) %>% 
     summarise(prop.wt=mean(prop.wt,na.rm = T), num.samples=n()) %>% 
-    filter(!is.na(trophic) & !is.na(Gear))
-  head(prop.fam.gear.weight) 
-  
- # Mean weight by Year by species
- 
- # Mean weight by Year by family
-  
+    filter(!is.na(trophic))
+head(prop.troph.weight) 
 
-# # average weight by species
-#   mean.fish.weight <- fish.species %>% 
-#     group_by(Species_latin_name,trophic,family) %>% 
-#     summarise(mean.fish.weight=mean(ind.fish.weight,na.rm = T))
-#   head(mean.fish.weight)
-#   
-# #types of fish per year, the weight of the fish, the number of fish, and the avg. fish weight, 
-# # and the proportion of the catch by species and by weight
-#  fish.species.year <- fish.species %>% 
-#    group_by(Sample_ID, Year, Species_latin_name,rec.num, trip.wt, family, trophic)%>%
-#    summarize(spec.sum.wt=sum(ind.fish.weight, na.rm=T),
-#              Num.ind=n())%>%
-#   # mutate(avg.fish.wt=spec.sum.wt/Num.ind)%>%
-#    mutate(pct.spec = (Num.ind/rec.num) *100)%>%
-#    mutate(pct.wt = (spec.sum.wt/trip.wt)*100)
-#  head(fish.species.year)
-#  
-#  #calculating the means for each species fish weight, species composition, and composition weight
-#  species.mean.year<-fish.species.year%>%
-#    group_by(Year,Species_latin_name)%>%
-#    filter(!is.na(pct.wt))%>%
-#    summarise(mean.avg.fish.wt=mean(avg.fish.wt), 
-#              mean.pct.spec=mean(pct.spec),
-#              mean.pct.wt=mean(pct.wt))
-#  head(species.mean.year)
-# 
-#  #types of fish per year, the weight of the fish, the number of fish, and the avg. fish weight, 
-#  #and the proportion of the catch by species and by weight for each gear
-#  fish.species.gear.year <- fish.species %>% 
-#    group_by(Sample_ID, Year, Gear,Species_latin_name,rec.num, trip.wt)%>%
-#    summarize(gear.sum.wt=sum(ind.fish.weight, na.rm=T),
-#              Num.ind=n_distinct(Rec_ID))%>%
-#    mutate(avg.gear.wt=gear.sum.wt/Num.ind)%>%
-#    mutate(pct.spec = (Num.ind/rec.num) *100)%>%
-#    mutate(pct.wt = (gear.sum.wt/trip.wt)*100)
-#  head(fish.species.gear.year)
-#  
-#  #types of fish per year, the weight of the fish, the number of fish, and the avg. fish weight, 
-#  #and the proportion of the catch by family 
-#  fish.family.year <- fish.species %>% 
-#    group_by(Sample_ID, Year, family,rec.num, trip.wt)%>%
-#    summarize(spec.sum.wt=sum(ind.fish.weight, na.rm=T),
-#              Num.ind=n_distinct(Rec_ID))%>%
-#    mutate(avg.fish.wt=spec.sum.wt/Num.ind)%>%
-#    mutate(pct.spec = (Num.ind/rec.num) *100)%>%
-#    mutate(pct.wt = (spec.sum.wt/trip.wt)*100)
-#  head(fish.family.year)
+# Proportion weight by trophic group and gear
+prop.troph.gear.weight <- fish.species %>% 
+  group_by(Sample_ID,Gear,trophic) %>% 
+  summarise(prop.wt=sum(prop.wt,na.rm = T)) %>% 
+  group_by(trophic,Gear) %>% 
+  summarise(prop.wt=mean(prop.wt,na.rm = T), num.samples=n()) %>% 
+  filter(!is.na(trophic)& !is.na(Gear))
+head(prop.troph.gear.weight) 
+  
+# Mean weight by Year by species
+mean.fish.weight <- fish.species %>% 
+  group_by(Sample_ID,Species_latin_name,Year) %>% 
+  summarise(ind.fish.weight=sum(ind.fish.weight,na.rm = T)) %>% 
+  group_by(Year,Species_latin_name) %>% 
+  summarise(mean.fish.weight=mean(ind.fish.weight,na.rm = T),num.samples=n()) %>% 
+  filter(!is.na(Species_latin_name))
+head(mean.fish.weight)
  
- ########################## adding zone areas and initial map making for fishing pressure #####################
- gis.dir <- "/Users/gcullinan//OneDrive - Duke University/MP Project/spatial-fisheries-analysis/Data/"
-<<<<<<< HEAD
- #gis.dir <- 'R:/Gill/spatial-fisheries-analysis/tables/raw/' #set the import directory
-=======
-gis.dir <-"R:/Gill/spatial-fisheries-analysis/tables/raw/Fisheries_Zones"
->>>>>>> 61f4c0c521ddbb8690c8598762b2c30d8b02fe79
+# Mean weight by Year by family
+mean.family.weight <- fish.species %>% 
+  group_by(Sample_ID,family,Year) %>% 
+  summarise(ind.fish.weight=sum(ind.fish.weight,na.rm = T)) %>% 
+  group_by(Year,family) %>% 
+  summarise(mean.fish.weight=mean(ind.fish.weight,na.rm = T),num.samples=n()) %>% 
+  filter(!is.na(family))
+head(mean.family.weight)
+
+############################### Further Lobster Analysis, Gender and Berried ############################
+#looking at the sample set of lobsters in terms of seeing how many are female, berried, or undersized per year
+lob.gender.berried.O.U.year <- log.data.L%>%
+  select(Month,Year,Lenght_.mm.,Sex_.M.F.,Berried_.Y.N.,Over.Under.size_.O.U.,Trip_ID)%>%
+  mutate(female=ifelse(Sex_.M.F.=="F", 1,0),
+         berried=ifelse(Berried_.Y.N. == "Y",1,0),
+         undersized=ifelse(Over.Under.size_.O.U.=="U",1,0))%>%
+  group_by(Year)%>%
+  summarize(Num_F=sum(female,na.rm=T),
+            Num_berried=sum(berried,na.rm=T),
+            Num_undersized=sum(undersized,na.rm=T),
+            mean.length=mean(Lenght_.mm.),
+            samp.num.ind=n())
+head(lob.gender.berried.O.U.year)
+
+#looking at the sample set of lobsters in terms of seeing how many are female, berried, or undersized per month
+lob.gender.berried.O.U.month <- log.data.L%>%
+  select(Month,Year,Lenght_.mm.,Sex_.M.F.,Berried_.Y.N.,Over.Under.size_.O.U.,Trip_ID)%>%
+  mutate(female=ifelse(Sex_.M.F.=="F", 1,0),
+         berried=ifelse(Berried_.Y.N. == "Y",1,0),
+         undersized=ifelse(Over.Under.size_.O.U.=="U",1,0))%>%
+  group_by(Year,Month)%>%
+  summarize(Num_F=sum(female,na.rm=T),
+            Num_berried=sum(berried,na.rm=T),
+            Num_undersized=sum(undersized,na.rm=T),
+            mean.length=mean(Lenght_.mm.),
+            samp.num.ind=n())
+head(lob.gender.berried.O.U.month)
+
+############################ Further conch analysis in terms of shell length and lip thickness ############
+#looking at further summary statistics involving conch sex, shell length, and lip thickness 
+#for each year 
+conch.length.thickness.year<-log.data.C%>%
+  select(Month,Year,Shell_length_.cm.,Lip_thickness_.mm.,Tot_weight_.g.,Sex,Sample_ID,Rec_ID)%>%
+  mutate(female=ifelse(Sex=="F",1,0),
+         Shell_length_.cm.=as.numeric(Shell_length_.cm.))%>%
+  group_by(Year)%>%
+  summarize(Num_F=sum(female,na.rm=T),
+            mean_shell_length=mean(Shell_length_.cm.,na.rm=T),
+            mean_lip_thickness=mean(Lip_thickness_.mm.,na.rm=T),
+            samp.num.ind=n())
+head(conch.length.thickness.year)
+
+#looking at further summary statistics involving conch sex, shell length, and lip thickness 
+#for each month and sample ID
+conch.length.thickness.month<-log.data.C%>%
+  select(Month,Year,Shell_length_.cm.,Lip_thickness_.mm.,Tot_weight_.g.,Sex,Sample_ID,Rec_ID)%>%
+  mutate(female=ifelse(Sex=="F",1,0),
+         Shell_length_.cm.=as.numeric(Shell_length_.cm.))%>%
+  group_by(Year,Month)%>%
+  summarize(Num_F=sum(female,na.rm=T),
+            mean_shell_length=mean(Shell_length_.cm.,na.rm=T),
+            mean_lip_thickness=mean(Lip_thickness_.mm.,na.rm=T),
+            samp.num.ind=n())
+head(conch.length.thickness.month)
+########################## adding zone areas and initial map making for fishing pressure #####################
+gis.dir <- "/Users/gcullinan//OneDrive - Duke University/MP Project/spatial-fisheries-analysis/Data/"
+#gis.dir <-"R:/Gill/spatial-fisheries-analysis/tables/raw/Fisheries_Zones"
+
  allfiles <- list.files(gis.dir,recursive = T, full.names = T) 
  
  # Select kml files with 1) digit then 1 letter, 2) digit then 2 letters, 3) digit then .kml, 4) digit then buffer
@@ -528,7 +580,7 @@ gis.dir <-"R:/Gill/spatial-fisheries-analysis/tables/raw/Fisheries_Zones"
    mutate(area_km2 = area_m2/1000000)%>%
    mutate (fishing_pressure=weight.total/area_km2)%>%
    select(Name,zone_id,Year,area_m2,area_km2,weight.total,fishing_pressure, geometry)%>%
-   rename(weight_lb=weight.total)
+   rename(weight_kg=weight.total)
  
  zone.ind.joiner <-zone.ind2 %>%
    select(Name,zone_id,Year,area_m2,area_km2,geometry)
@@ -598,13 +650,9 @@ gis.dir <-"R:/Gill/spatial-fisheries-analysis/tables/raw/Fisheries_Zones"
  plot(fish.zone.2018)
  plot(fish.zone.2019)
  
-<<<<<<< HEAD
-
-=======
  # saving files
  #ggsave(paste0(plotdir,today.date,'_PCA_NTvMU_all_covariates.jpg'),width = 10,height = 18)
  
->>>>>>> 61f4c0c521ddbb8690c8598762b2c30d8b02fe79
  ######################### mapping lobster catch by individual count ###########################
   # Example join
  lobster.zones <-zone.lob.year%>%
@@ -790,38 +838,6 @@ fish.subset.group$color[fish.subset.group$Year==2019] <- "deeppink"
 dotchart(fish.subset.group$Num.ind, labels=fish.subset.group$family,cex=.7,
          cex.axis=1.25, cex.lab =2,cex.main=2, 
          groups = fish.subset.group$Year, gcolor="black", color=fish.subset.group$color)
-######################## analysis of percentage composition of fish species ########################
-
-#fish.GCRM.join.pct <-log.data.F %>% 
-#  left_join(GCRM.data.Fish, by = "Species_latin_name" )%>%
-#  filter(!is.na(Trip_ID)) %>% 
-#  mutate(ind.fish.weight = ((a*Length_.cm.)^b)*TL2FL) 
-
-unique(fish.species$Gear)
-
-fish.GCRM.join.gear <-  fish.species %>% 
-  group_by(Gear) %>% 
-  summarise(gear.sum.wt=sum(ind.fish.weight, na.rm=T))
-head(fish.GCRM.join.gear)
-
-fish.GCRM.join.gear.family <- fish.species %>% 
-  group_by(Sample_ID,Gear) %>% 
-  mutate(avg.gear.wt=mean(ind.fish.weight,na.rm = T))
-  
-  group_by(Trip_ID,Gear,family) %>% 
-  summarise(sum.weight=sum(ind.fish.weight, na.rm=T)) %>% 
-  left_join(fish.GCRM.join.gear, by="Gear") %>% 
-  mutate(pct.wt=sum.weight/gear.sum.wt*100)
-head(fish.GCRM.join.gear.family)
- 
-family.percent.gear.comp <- family.year.gear %>%
-  mutate(percent.comp = Count/sum(Count)*100)
-head(family.percent.gear.comp)
-
-family.percent.gear.weight <- fish.family.gear.year %>%
-  mutate(percent.weight = total.weight/sum(total.weight)*100)
-head(family.percent.gear.weight)
-
 ##################### assessing annual fishing effort by gear type and prepping for maps #################  
 # changing the character type and joining the fishing summaries with the spatial geometries
 fishing.zones.gear <-zone.fish.gear.year%>%
@@ -895,4 +911,43 @@ head(redhind.mean.year)
 
 
 
+
+
+################### seasonal plots for fish, lobsters, and conch, no zones########################
+#looking at fish
+fish.months.season <- zones.fish %>% 
+  group_by(Month)%>% 
+  summarize(weight.total=sum(weight.per.zone,na.rm = T),
+            Num.Trips=n_distinct(Trip_ID))%>%
+  mutate(avg.weight.per.trip=weight.total/Num.Trips)#summerize by the total amount fo fish caught in that zone for that month
+head(fish.months.season)
+plot(fish.months.season$weight.total~fish.months.season$Month, 
+     col=fish.months.season$Month)
+
+fish.years.zones <- zones.fish %>% 
+  group_by(Year,zone_id)%>% 
+  summarize(weight.total=sum(weight.per.zone,na.rm = T),
+            Num.Trips=n_distinct(Trip_ID))%>%
+  mutate(avg.weight.per.trip=weight.total/Num.Trips)#summerize by the total amount fo fish caught in that zone for that month
+head(fish.years.zones)
+plot(fish.years.zones$weight.total~fish.years.zones$zone_id, 
+     col=fish.years.zones$Year)
+    
+#looking at lobsters
+zone.lob.months.season <- zones.lob %>% 
+  group_by(Month)%>% 
+  summarize(ind.total=sum(ind.per.zone,na.rm = T),
+            Num.Trips=n_distinct(Trip_ID))%>%
+  mutate(avg.ind.per.trip=ind.total/Num.Trips)
+head(zone.lob.months.season)
+plot(zone.lob.months.season$ind.total~zone.lob.months.season$Month)
+
+#looking at conch
+zone.conch.months.season <- zones.conch %>% 
+  group_by(Month)%>% 
+  summarize(ind.total=sum(ind.per.zone,na.rm = T),
+            Num.Trips=n_distinct(Trip_ID))%>%
+  mutate(avg.ind.per.trip=ind.total/Num.Trips)
+head(zone.conch.months.season)
+plot(zone.conch.months.season$ind.total~zone.conch.months.season$Month)
 
