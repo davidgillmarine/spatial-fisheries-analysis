@@ -501,7 +501,8 @@ lob.gender.berried.O.U.year <- log.data.L%>%
             Num_berried=sum(berried,na.rm=T),
             Num_undersized=sum(undersized,na.rm=T),
             mean.length=mean(Lenght_.mm.),
-            samp.num.ind=n())
+            samp.num.ind=n())%>%
+  mutate(prop.berried=Num_berried/samp.num.ind)
 head(lob.gender.berried.O.U.year)
 
 #looking at the sample set of lobsters in terms of seeing how many are female, berried, or undersized per month
@@ -515,7 +516,8 @@ lob.gender.berried.O.U.month <- log.data.L%>%
             Num_berried=sum(berried,na.rm=T),
             Num_undersized=sum(undersized,na.rm=T),
             mean.length=mean(Lenght_.mm.),
-            samp.num.ind=n())
+            samp.num.ind=n())%>%
+  mutate(prop.berried=Num_berried/samp.num.ind)
 head(lob.gender.berried.O.U.month)
 
 ############################ Further conch analysis in terms of shell length and lip thickness ############
@@ -533,7 +535,7 @@ conch.length.thickness.year<-log.data.C%>%
 head(conch.length.thickness.year)
 
 #looking at further summary statistics involving conch sex, shell length, and lip thickness 
-#for each month and sample ID
+#for each month
 conch.length.thickness.month<-log.data.C%>%
   select(Month,Year,Shell_length_.cm.,Lip_thickness_.mm.,Tot_weight_.g.,Sex,Sample_ID,Rec_ID)%>%
   mutate(female=ifelse(Sex=="F",1,0),
@@ -549,14 +551,12 @@ gis.dir <- "/Users/gcullinan//OneDrive - Duke University/MP Project/spatial-fish
 #gis.dir <-"R:/Gill/spatial-fisheries-analysis/tables/raw/Fisheries_Zones"
 
  allfiles <- list.files(gis.dir,recursive = T, full.names = T) 
- 
  # Select kml files with 1) digit then 1 letter, 2) digit then 2 letters, 3) digit then .kml, 4) digit then buffer
  file.list <- c(grep("Zone_[0-9]{1}.kml",allfiles,value = T),
                 grep("FAD_[0-9]_[a-z]*",allfiles,value = T))
  
  zone.ind <- st_read(file.list[1])
  zone.ind$zone_id <- as.character(gsub("Zone_","", zone.ind$Name)) # removes all non-digit characters
- 
  
  for (i in (2:length(file.list))) {
    # retrieve kml 
@@ -640,7 +640,7 @@ gis.dir <- "/Users/gcullinan//OneDrive - Duke University/MP Project/spatial-fish
                         na.value="gray90",limits=c(0,max(zone.ind2$fishing_pressure))) +
    labs(title = paste0("Map of Fishing Effort for 2019"), x="Total Landings per sqkm") +
    theme_bw()
- plot_grid(fish.zone.2012,fish.zone.2013,fish.zone.2014, fish.zone.2015, fish.zone.2016, fish.zone.2017, fish.zone.2018, fish.zone.2019)
+ plot_grid_fish<-plot_grid(fish.zone.2012,fish.zone.2013,fish.zone.2014, fish.zone.2015, fish.zone.2016, fish.zone.2017, fish.zone.2018, fish.zone.2019)
  plot(fish.zone.2012)
  plot(fish.zone.2013)
  plot(fish.zone.2014)
@@ -651,10 +651,18 @@ gis.dir <- "/Users/gcullinan//OneDrive - Duke University/MP Project/spatial-fish
  plot(fish.zone.2019)
  
  # saving files
- #ggsave(paste0(plotdir,today.date,'_PCA_NTvMU_all_covariates.jpg'),width = 10,height = 18)
+ ggsave("Fishing_Effort_2012-2019.png", plot = plot_grid_fish, device = "png", path="Final_Figures_Tables/",scale = 1.5,width = 12, height = 12, units="in")
+ ggsave("Fishing_Effort_2012.png", plot = fish.zone.2012, device = "png", path="Final_Figures_Tables/")
+ ggsave("Fishing_Effort_2013.png", plot = fish.zone.2013, device = "png", path="Final_Figures_Tables/")
+ ggsave("Fishing_Effort_2014.png", plot = fish.zone.2014, device = "png", path="Final_Figures_Tables/")
+ ggsave("Fishing_Effort_2015.png", plot = fish.zone.2015, device = "png", path="Final_Figures_Tables/")
+ ggsave("Fishing_Effort_2016.png", plot = fish.zone.2016, device = "png", path="Final_Figures_Tables/")
+ ggsave("Fishing_Effort_2017.png", plot = fish.zone.2017, device = "png", path="Final_Figures_Tables/")
+ ggsave("Fishing_Effort_2018.png", plot = fish.zone.2018, device = "png", path="Final_Figures_Tables/")
+ ggsave("Fishing_Effort_2019.png", plot = fish.zone.2019, device = "png", path="Final_Figures_Tables/")
  
+
  ######################### mapping lobster catch by individual count ###########################
-  # Example join
  lobster.zones <-zone.lob.year%>%
    mutate (zone_id = as.character(zone_id))
  
@@ -718,7 +726,19 @@ gis.dir <- "/Users/gcullinan//OneDrive - Duke University/MP Project/spatial-fish
                         na.value="gray90",limits=c(0,max(zone.ind5$lobster_pressure))) +
    labs(title = paste0("Map of Lobster Fishing Effort for 2019"), x="Total landings per sqkm") +
    theme_bw()
- plot_grid(lobster.zone.2012,lobster.zone.2013,lobster.zone.2014,lobster.zone.2015,lobster.zone.2016,lobster.zone.2017,lobster.zone.2018,lobster.zone.2019)
+ plot_grid_lobster <-plot_grid(lobster.zone.2012,lobster.zone.2013,lobster.zone.2014,lobster.zone.2015,lobster.zone.2016,lobster.zone.2017,lobster.zone.2018,lobster.zone.2019)
+ 
+ # saving files
+ ggsave("Lobster_Effort_2012-2019.png", plot = plot_grid_lobster, device = "png", path="Final_Figures_Tables/",scale = 1.5,width = 12, height = 12, dpi=300, units="in")
+ ggsave("Lobster_Effort_2012.png", plot = lobster.zone.2012, device = "png", path="Final_Figures_Tables/")
+ ggsave("Lobster_Effort_2013.png", plot = lobster.zone.2013, device = "png", path="Final_Figures_Tables/")
+ ggsave("Lobster_Effort_2014.png", plot = lobster.zone.2014, device = "png", path="Final_Figures_Tables/")
+ ggsave("Lobster_Effort_2015.png", plot = lobster.zone.2015, device = "png", path="Final_Figures_Tables/")
+ ggsave("Lobster_Effort_2016.png", plot = lobster.zone.2016, device = "png", path="Final_Figures_Tables/")
+ ggsave("Lobster_Effort_2017.png", plot = lobster.zone.2017, device = "png", path="Final_Figures_Tables/")
+ ggsave("Lobster_Effort_2018.png", plot = lobster.zone.2018, device = "png", path="Final_Figures_Tables/")
+ ggsave("Lobster_Effort_2019.png", plot = lobster.zone.2019, device = "png", path="Final_Figures_Tables/")
+ 
  
  ############################### mapping conch catch by individual count ######################
  #join with the conch
@@ -785,7 +805,18 @@ gis.dir <- "/Users/gcullinan//OneDrive - Duke University/MP Project/spatial-fish
                         na.value="gray90",limits=c(0,max(zone.ind8$conch_pressure))) +
    labs(title = paste0("Map of Conch Fishing Effort for 2019"), x="Total landings per sqkm") +
     theme_bw()
- plot_grid(conch.zone.2012,conch.zone.2013,conch.zone.2014,conch.zone.2015,conch.zone.2016,conch.zone.2017,conch.zone.2018,conch.zone.2019)
+ plot_grid_conch<-plot_grid(conch.zone.2012,conch.zone.2013,conch.zone.2014,conch.zone.2015,conch.zone.2016,conch.zone.2017,conch.zone.2018,conch.zone.2019)
+ 
+ # saving files
+ ggsave("Conch_Effort_2012-2019.png", plot = plot_grid_conch, device = "png", path="Final_Figures_Tables/",scale = 1.5,width = 12, height = 12,dpi=300, units="in")
+ ggsave("Conch_Effort_2012.png", plot = conch.zone.2012, device = "png", path="Final_Figures_Tables/")
+ ggsave("Conch_Effort_2013.png", plot = conch.zone.2013, device = "png", path="Final_Figures_Tables/")
+ ggsave("Conch_Effort_2014.png", plot = conch.zone.2014, device = "png", path="Final_Figures_Tables/")
+ ggsave("Conch_Effort_2015.png", plot = conch.zone.2015, device = "png", path="Final_Figures_Tables/")
+ ggsave("Conch_Effort_2016.png", plot = conch.zone.2016, device = "png", path="Final_Figures_Tables/")
+ ggsave("Conch_Effort_2017.png", plot = conch.zone.2017, device = "png", path="Final_Figures_Tables/")
+ ggsave("Conch_Effort_2018.png", plot = conch.zone.2018, device = "png", path="Final_Figures_Tables/")
+ ggsave("Conch_Effort_2019.png", plot = conch.zone.2019, device = "png", path="Final_Figures_Tables/")
  
  ############################## potential bar plots for family stats ##############################
 
@@ -844,13 +875,24 @@ fishing.zones.gear <-zone.fish.gear.year%>%
   mutate (zone_id = as.character(zone_id))
 
 zone.ind10 <- zone.ind.joiner %>% 
-  left_join(fishing.zones.gear, by = c("zone_id", "Year"))%>%
+  left_join(fishing.zones.gear)%>%
   #mutate(area_km2 = area_m2/1000000)%>%
   mutate (fishing_pressure=weight.total/area_km2)%>%
   select(Name,zone_id,Year,Gear,area_m2,area_km2,weight.total,fishing_pressure, geometry)%>%
-  rename(weight_lb=weight.total)
+  rename(weight_kg=weight.total)%>%
+  group_by(Name,zone_id,Gear)%>%
+  summarize(gear.weight.total=sum(weight_kg,na.rm=T))
 head(zone.ind10)
+unique(zone.ind10$Gear)
 
+# Plot fishing pressure maps
+fish.zone.HL <- ggplot() +
+  geom_sf(data=filter(zone.ind10,Gear=="HL"), aes( fill = fishing_pressure)) +
+  scale_fill_gradient2(low="#f7fbff",high="#2171b5",name="Fishing Pressure",
+                       na.value="gray90",limits=c(0,max(zone.ind10$fishing_pressure))) +
+  labs(title = paste0("Map of Fishing Effort by Handline"), x="Total Landings per sqkm") +
+  theme_bw()
+plot(fish.zone.HL)
 ################## assessing annual lobster fishing effort by gear type and prepping for maps #################  
  
 lobster.zones.gear <-zone.lob.gear.year%>%
@@ -914,7 +956,7 @@ head(redhind.mean.year)
 
 
 ################### seasonal plots for fish, lobsters, and conch, no zones########################
-#looking at fish
+#looking at fish monthly season totals
 fish.months.season <- zones.fish %>% 
   group_by(Month)%>% 
   summarize(weight.total=sum(weight.per.zone,na.rm = T),
@@ -923,7 +965,20 @@ fish.months.season <- zones.fish %>%
 head(fish.months.season)
 plot(fish.months.season$weight.total~fish.months.season$Month, 
      col=fish.months.season$Month)
+#using ggplot to create better looking plots of monthly seasonality
+fishing_seasons<-ggplot(fish.months.season, mapping = aes(x=Month, y=weight.total))
+fishing_seasons+geom_point(color="blue",size=4)+ylim(0,2500)+
+  theme(axis.text.x = element_text(size=20),
+        axis.text.y = element_text(size=20),
+        axis.title.x = element_text(size=25, face="bold"),
+        axis.title.y = element_text(size=25, face="bold"),
+        plot.title = element_text(size=25, face="bold"))+
+  scale_x_continuous(breaks = seq(0, 12, by = 1))+
+  labs(x="Month", y="Total Weight (lb)")+
+  ggtitle("Plot Depicting Seasonality of Fish Caught from 2012-2019")
+ggsave("Fish_Seasonality_2012-2019.png", path="Final_Figures_Tables/", scale=1.5)
 
+#looking at variations per year per zone for amount of fish caught 
 fish.years.zones <- zones.fish %>% 
   group_by(Year,zone_id)%>% 
   summarize(weight.total=sum(weight.per.zone,na.rm = T),
@@ -932,22 +987,70 @@ fish.years.zones <- zones.fish %>%
 head(fish.years.zones)
 plot(fish.years.zones$weight.total~fish.years.zones$zone_id, 
      col=fish.years.zones$Year)
-    
+#looking at the total amount of fish caught each year and looking for total changes
+fish.years <- zones.fish %>% 
+  group_by(Year)%>% 
+  summarize(weight.total=sum(weight.per.zone,na.rm = T),
+            Num.Trips=n_distinct(Trip_ID))%>%
+  mutate(avg.weight.per.trip=weight.total/Num.Trips)#summerize by the total amount fo fish caught in that zone for that month
+head(fish.years)
+plot(fish.years$weight.total~fish.years$Year, 
+     col=fish.years.zones$Year)
+#using ggplot to create better looking plots of yearly summaries 
+fishing_years_sum<-ggplot(fish.years, mapping = aes(x=Year, y=weight.total))
+fishing_years_sum+geom_point(color="blue",size=4)+ylim(0,4000)+
+  theme(axis.text.x = element_text(size=20),
+        axis.text.y = element_text(size=20),
+        axis.title.x = element_text(size=25, face="bold"),
+        axis.title.y = element_text(size=25, face="bold"),
+        plot.title = element_text(size=25, face="bold"))+
+  scale_x_continuous(breaks = seq(2012,2019 , by = 1))+
+  labs(x="Year", y="Total Weight (lb)")+
+  ggtitle("Plot Depicting Yearly Totals of Fish Caught from 2012-2019")
+ggsave("Fish_Year_Totals_2012-2019.png", path="Final_Figures_Tables/", scale=1.5)
+
 #looking at lobsters
-zone.lob.months.season <- zones.lob %>% 
+lob.months.season <- zones.lob %>% 
   group_by(Month)%>% 
   summarize(ind.total=sum(ind.per.zone,na.rm = T),
             Num.Trips=n_distinct(Trip_ID))%>%
   mutate(avg.ind.per.trip=ind.total/Num.Trips)
-head(zone.lob.months.season)
-plot(zone.lob.months.season$ind.total~zone.lob.months.season$Month)
+head(lob.months.season)
+plot(lob.months.season$ind.total~zone.lob.months.season$Month)
+
+#using ggplot to create maps of lobster seasonality from 2012-2019
+lobster_season<-ggplot(lob.months.season, mapping = aes(x=Month, y=ind.total))
+lobster_season+geom_point(color="blue",size=4)+
+  theme(axis.text.x = element_text(size=20),
+        axis.text.y = element_text(size=20),
+        axis.title.x = element_text(size=25, face="bold"),
+        axis.title.y = element_text(size=25, face="bold"),
+        plot.title = element_text(size=25, face="bold"))+
+  scale_x_continuous(breaks = seq(0,12, by = 1))+
+  scale_y_continuous(breaks = seq(0,5500, by = 1000))+
+  labs(x="Month", y="Total Number of Individuals")+
+  ggtitle("Plot Depicting Lobster Seasonality from 2012-2019")
+ggsave("Lobster_Seasonality_2012-2019.png", path="Final_Figures_Tables/", scale=1.5)
 
 #looking at conch
-zone.conch.months.season <- zones.conch %>% 
+conch.months.season <- zones.conch %>% 
   group_by(Month)%>% 
   summarize(ind.total=sum(ind.per.zone,na.rm = T),
             Num.Trips=n_distinct(Trip_ID))%>%
   mutate(avg.ind.per.trip=ind.total/Num.Trips)
-head(zone.conch.months.season)
-plot(zone.conch.months.season$ind.total~zone.conch.months.season$Month)
+head(conch.months.season)
+plot(conch.months.season$ind.total~zone.conch.months.season$Month)
+#using ggplot to create maps of conch seasonality from 2012-2019
+conch_season<-ggplot(conch.months.season, mapping = aes(x=Month, y=ind.total))
+conch_season+geom_point(color="blue",size=4)+ylim(0,2500)+
+  theme(axis.text.x = element_text(size=20),
+        axis.text.y = element_text(size=20),
+        axis.title.x = element_text(size=25, face="bold"),
+        axis.title.y = element_text(size=25, face="bold"),
+        plot.title = element_text(size=25, face="bold"))+
+  scale_x_continuous(breaks = seq(0,12, by = 1))+
+  
+  labs(x="Month", y="Total Number of Individuals")+
+  ggtitle("Plot Depicting Conch Seasonality from 2012-2019")
+ggsave("Conch_Seasonality_2012-2019.png", path="Final_Figures_Tables/", scale=1.5)
 
