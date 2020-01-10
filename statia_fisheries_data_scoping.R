@@ -36,7 +36,7 @@ unique(log.data$Landings) #check
 log.data <- log.data %>% 
   mutate(Num_ind=as.numeric(Num_ind),
          Trip_ID=as.character(Trip_ID),
-         `Weight_(Lbs)`=`Weight_(Lbs)`/2.2,
+         `Weight_(kg)`=`Weight_(Lbs)`/2.2,
          in.park=ifelse(`max_(m)`<=30, 1,0)) 
   
 #################### Breaking out the data by year, and month, and by gear. And by fish, lobster and conch #############
@@ -60,32 +60,32 @@ gear.trips.month <- log.data %>%   #looking at the types of gear used, and the a
 fish.weight.year <- log.data %>%   # looking at the amount of fish caught per year
   filter(Landings=="Fish") %>%     # sort the data just by fish
   group_by(Year)%>%      #group by the relevent groups
-  summarize(fish_weight = sum(`Weight_(Lbs)`, na.rm=TRUE))   #summerize by these groups by unique Trip_ID and remove NAs
+  summarize(fish_weight = sum(`Weight_(kg)`, na.rm=TRUE))   #summerize by these groups by unique Trip_ID and remove NAs
 
 fish.weight.month <- log.data %>%     # looking at the amount of fish caught per year
   filter(Landings=="Fish") %>%         
   group_by(Year, Month)%>%  
-  summarize(fish_weight = sum(`Weight_(Lbs)`, na.rm=TRUE))  
+  summarize(fish_weight = sum(`Weight_(kg)`, na.rm=TRUE))  
 
 fish.gear<- log.data %>%       # looking at the amount of fish caught per gear
   filter(Landings =="Fish") %>%
   group_by(Gear) %>%
-  summarize(fish_weight = sum(`Weight_(Lbs)`, na.rm=TRUE))
+  summarize(fish_weight = sum(`Weight_(kg)`, na.rm=TRUE))
 
 fish.gear.year <- log.data %>%      # looking at the amount of fish caught per gear per year
   filter(Landings =="Fish") %>%
   group_by(Year, Gear) %>%
-  summarize(fish_weight = sum(`Weight_(Lbs)`, na.rm=TRUE))
+  summarize(fish_weight = sum(`Weight_(kg)`, na.rm=TRUE))
 
 fish.gear.month <- log.data %>%      # looking at the amount of fish caught per gear per month
   group_by(Year, Month, Landings, Gear) %>%
   filter(Landings =="Fish") %>%
-  summarize(fish_weight = sum(`Weight_(Lbs)`, na.rm=TRUE))
+  summarize(fish_weight = sum(`Weight_(kg)`, na.rm=TRUE))
 
 fish.gear.month.all <- log.data %>%      # looking at the amount of fish caught per gear per month
   group_by(Month, Landings, Gear) %>%
   filter(Landings =="Fish") %>%
-  summarize(fish_weight = sum(`Weight_(Lbs)`, na.rm=TRUE))
+  summarize(fish_weight = sum(`Weight_(kg)`, na.rm=TRUE))
 
 ##################### looking at how much lobster was caught and by what type of gear ################
 
@@ -209,13 +209,12 @@ log.data.C <- log.data.Conch %>% #create the join data and filter it by year to 
 names(log.data.C)
 
 ###################################### Zone Analysis For Fish ##########################################
-head(zones.fish)
 zones.fish <- log.data %>% #rename variable to zone.fish
-  select(Rec_ID,Trip_ID,Year,Month,Day,Z1:Z6,Landings,Gear,`Weight_(Lbs)`,`max_(m)`,in.park) %>% #select relevent variables
+  select(Rec_ID,Trip_ID,Year,Month,Day,Z1:Z6,Landings,Gear,`Weight_(kg)`,`max_(m)`,in.park) %>% #select relevent variables
   mutate(n.zones=rowSums(!is.na(select(., Z1:Z6)))) %>% #mutate and keep new variable as n.zones
   gather(key="zone.total",value="zone_id",Z1:Z6) %>% #bring these values together, and sum and rename them
   filter(!is.na(zone_id)) %>%     #filter by zone ID and remove NAs
-  mutate(weight.per.zone=`Weight_(Lbs)`/n.zones) %>%  #mutate and keep new variable as weight per zone
+  mutate(weight.per.zone=`Weight_(kg)`/n.zones) %>%  #mutate and keep new variable as weight per zone
   filter(Landings=="Fish")%>%     # filter for only fish
   arrange(Trip_ID)                # arrange by unique trip ID for clarity
 head(zones.fish)   #check to make sure it was ordered properly
@@ -235,6 +234,14 @@ zone.fish.month <- zones.fish %>%
             Num.Trips=n_distinct(Trip_ID))%>%
   mutate(avg.weight.per.trip=weight.total/Num.Trips)#summerize by the total amount fo fish caught in that zone for that month
 head(zone.fish.month)
+
+#amount of fish per zone per gear, the number of trips using that gear, and the average weight using that gear per trip
+zone.fish.gear<-zones.fish %>%
+  group_by(Gear, zone_id) %>%
+  summarize(weight.total=sum(weight.per.zone,na.rm = T),
+            Num.Trips=n_distinct(Trip_ID))%>%
+  mutate(avg.weight.per.trip=weight.total/Num.Trips)
+head(zone.fish.gear) 
 
 #amount of fish per zone per year per gear, the number of trips using that gear, and the average weight using that gear per trip
 zone.fish.gear.year<-zones.fish %>%
@@ -590,54 +597,58 @@ gis.dir <- "/Users/gcullinan//OneDrive - Duke University/MP Project/spatial-fish
    group_by(zone_id) %>% 
    summarise(fishing_pressure=mean(fishing_pressure)) %>% 
    filter(!grepl("FAD",zone_id))
+
+ #calculating the range for use in standardizing the scales of all the plots
+ zone.ind.range.fish <- range(zone.ind2$fishing_pressure, na.rm = TRUE) 
+ zone.ind.range.fish #check to make sure it worked 
  
  # Plot fishing pressure maps
- fish.zone.2012 <- ggplot() +
-   geom_sf(data=filter(zone.ind2,Year==2012), aes(fill = fishing_pressure)) +
-   scale_fill_gradient2(low="#f7fbff",high="#2171b5",name="Fishing Pressure",
-                        na.value="gray90",limits=c(0,max(zone.ind2$fishing_pressure))) +
-   labs(title = paste0("Map of Fishing Effort for 2012"), x="Total Landings per sqkm") +
-   theme_bw()
+ fish.zone.2012 <- ggplot() +    #enable the ggplot layer 
+   geom_sf(data=filter(zone.ind2,Year==2012), aes(fill = fishing_pressure)) +  #use the geom_sf to plot spatially
+   scale_fill_gradient2(low="#f7fbff",high="#2171b5",name="Fishing Pressure",  #use this to format the scale, set the limits using the range you calculated
+                        na.value="gray90",limits=c(0,max(zone.ind.range.fish[2]))) +
+   labs(title = paste0("Map of Fishing Effort for 2012"), x="Total Landings per sqkm") +  #create the correct labels for the plot
+   theme_bw()  #set the theme of the plot to blue and white 
  fish.zone.2013 <- ggplot() +
    geom_sf(data=filter(zone.ind2,Year==2013), aes(fill = fishing_pressure)) +
    scale_fill_gradient2(low="#f7fbff",high="#2171b5",name="Fishing Pressure",
-                        na.value="gray90",limits=c(0,max(zone.ind2$fishing_pressure))) +
+                        na.value="gray90",limits=c(0,max(zone.ind.range.fish[2]))) +
    labs(title = paste0("Map of Fishing Effort for 2013"), x="Total Landings per sqkm") +
    theme_bw() 
  fish.zone.2014 <- ggplot() +
    geom_sf(data=filter(zone.ind2,Year==2014), aes(fill = fishing_pressure)) +
    scale_fill_gradient2(low="#f7fbff",high="#2171b5",name="Fishing Pressure",
-                        na.value="gray90",limits=c(0,max(zone.ind2$fishing_pressure))) +
+                        na.value="gray90",limits=c(0,max(zone.ind.range.fish[2]))) +
    labs(title = paste0("Map of Fishing Effort for 2014"), x="Total Landings per sqkm") +
    theme_bw()
  fish.zone.2015 <- ggplot() +
    geom_sf(data=filter(zone.ind2,Year==2015), aes(fill = fishing_pressure)) +
    scale_fill_gradient2(low="#f7fbff",high="#2171b5",name="Fishing Pressure",
-                        na.value="gray90",limits=c(0,max(zone.ind2$fishing_pressure))) +
+                        na.value="gray90",limits=c(0,max(zone.ind.range.fish[2]))) +
    labs(title = paste0("Map of Fishing Effort for 2015"), x="Total Landings per sqkm") +
    theme_bw()
  fish.zone.2016 <- ggplot() +
    geom_sf(data=filter(zone.ind2,Year==2016), aes(fill = fishing_pressure)) +
    scale_fill_gradient2(low="#f7fbff",high="#2171b5",name="Fishing Pressure",
-                        na.value="gray90",limits=c(0,max(zone.ind2$fishing_pressure))) +
+                        na.value="gray90",limits=c(0,max(zone.ind.range.fish[2]))) +
    labs(title = paste0("Map of Fishing Effort for 2016"), x="Total Landings per sqkm") +
    theme_bw()
  fish.zone.2017 <- ggplot() +
    geom_sf(data=filter(zone.ind2,Year==2017), aes(fill = fishing_pressure)) +
    scale_fill_gradient2(low="#f7fbff",high="#2171b5",name="Fishing Pressure",
-                        na.value="gray90",limits=c(0,max(zone.ind2$fishing_pressure))) +
+                        na.value="gray90",limits=c(0,max(zone.ind.range.fish[2]))) +
    labs(title = paste0("Map of Fishing Effort for 2017"), x="Total Landings per SqKm") +
    theme_bw()
  fish.zone.2018 <- ggplot() +
    geom_sf(data=filter(zone.ind2,Year==2018), aes(fill = fishing_pressure)) +
    scale_fill_gradient2(low="#f7fbff",high="#2171b5",name="Fishing Pressure",
-                        na.value="gray90",limits=c(0,max(zone.ind2$fishing_pressure))) +
+                        na.value="gray90",limits=c(0,max(zone.ind.range.fish[2]))) +
    labs(title = paste0("Map of Fishing Effort for 2018"), x="Total Landings per sqkm") +
    theme_bw()
  fish.zone.2019 <- ggplot() +
    geom_sf(data=filter(zone.ind2,Year==2019), aes(fill = fishing_pressure)) +
    scale_fill_gradient2(low="#f7fbff",high="#2171b5",name="Fishing Pressure",
-                        na.value="gray90",limits=c(0,max(zone.ind2$fishing_pressure))) +
+                        na.value="gray90",limits=c(0,max(zone.ind.range.fish[2]))) +
    labs(title = paste0("Map of Fishing Effort for 2019"), x="Total Landings per sqkm") +
    theme_bw()
  plot_grid_fish<-plot_grid(fish.zone.2012,fish.zone.2013,fish.zone.2014, fish.zone.2015, fish.zone.2016, fish.zone.2017, fish.zone.2018, fish.zone.2019)
@@ -661,8 +672,7 @@ gis.dir <- "/Users/gcullinan//OneDrive - Duke University/MP Project/spatial-fish
  ggsave("Fishing_Effort_2018.png", plot = fish.zone.2018, device = "png", path="Final_Figures_Tables/")
  ggsave("Fishing_Effort_2019.png", plot = fish.zone.2019, device = "png", path="Final_Figures_Tables/")
  
-
- ######################### mapping lobster catch by individual count ###########################
+######################### mapping lobster catch by individual count ###########################
  lobster.zones <-zone.lob.year%>%
    mutate (zone_id = as.character(zone_id))
  
@@ -676,54 +686,58 @@ gis.dir <- "/Users/gcullinan//OneDrive - Duke University/MP Project/spatial-fish
    group_by(zone_id) %>% 
    summarise(lobster_pressure=mean(lobster_pressure)) %>% 
    filter(!grepl("FAD",zone_id))
+
+  #calculating the range for use in standardizing the scales of all the plots
+ zone.ind.range.lob <- range(zone.ind5$lobster_pressure, na.rm = TRUE) 
+ zone.ind.range.lob #check to make sure it worked 
  
- # Plot lobster pressure maps
- lobster.zone.2012 <- ggplot() +
-   geom_sf(data=filter(zone.ind5,Year==2012), aes(fill = lobster_pressure)) +
-   scale_fill_gradient2(low="#f7fbff",high="#2171b5",name="Lobster Fishing Pressure",
-                        na.value="gray90",limits=c(0,max(zone.ind5$lobster_pressure))) +
-   labs(title = paste0("Map of Lobster Fishing Effort for 2012"), x="Total Landings per sqkm") +
-   theme_bw()
+ # Plot lobster fishing pressure maps
+ lobster.zone.2012 <- ggplot() +  #initialize ggplot
+   geom_sf(data=filter(zone.ind5,Year==2012), aes(fill = lobster_pressure)) + #use the geom_sf function in ggplot to use spatial geometries to make maps
+   scale_fill_gradient2(low="#f7fbff",high="#2171b5",name="Lobster Fishing Pressure", #standardize the legend with the range you calculated for lobsters
+                        na.value="gray90",limits=c(0,max(zone.ind.range.lob[2]))) +
+   labs(title = paste0("Map of Lobster Fishing Effort for 2012"), x="Total Landings per sqkm") + #label the title and X axis of maps
+   theme_bw()  #set the theme as blue and white 
  lobster.zone.2013 <- ggplot() +
    geom_sf(data=filter(zone.ind5,Year==2013), aes(fill = lobster_pressure)) +
    scale_fill_gradient2(low="#f7fbff",high="#2171b5",name="Lobster Fishing Pressure",
-                        na.value="gray90",limits=c(0,max(zone.ind5$lobster_pressure))) +
+                        na.value="gray90",limits=c(0,max(zone.ind.range.lob[2]))) +
    labs(title = paste0("Map of Lobster Fishing Effort for 2013"), x="Total landings per sqkm") +
    theme_bw() 
  lobster.zone.2014 <- ggplot() +
    geom_sf(data=filter(zone.ind5,Year==2014), aes(fill = lobster_pressure)) +
    scale_fill_gradient2(low="#f7fbff",high="#2171b5",name="Lobster Fishing Pressure",
-                        na.value="gray90",limits=c(0,max(zone.ind5$lobster_pressure))) +
+                        na.value="gray90",limits=c(0,max(zone.ind.range.lob[2]))) +
    labs(title = paste0("Map of Lobster Fishing Effort for 2014"), x="Total landings per sqkm") +
    theme_bw()
  lobster.zone.2015 <- ggplot() +
    geom_sf(data=filter(zone.ind5,Year==2015), aes(fill = lobster_pressure)) +
    scale_fill_gradient2(low="#f7fbff",high="#2171b5",name="Lobster Fishing Pressure",
-                        na.value="gray90",limits=c(0,max(zone.ind5$lobster_pressure))) +
+                        na.value="gray90",limits=c(0,max(zone.ind.range.lob[2]))) +
    labs(title = paste0("Map of Lobster Fishing Effort for 2015"), x="Total landings per sqkm") +
    theme_bw()
  lobster.zone.2016 <- ggplot() +
    geom_sf(data=filter(zone.ind5,Year==2016), aes(fill = lobster_pressure)) +
    scale_fill_gradient2(low="#f7fbff",high="#2171b5",name="Lobster Fishing Pressure",
-                        na.value="gray90",limits=c(0,max(zone.ind5$lobster_pressure))) +
+                        na.value="gray90",limits=c(0,max(zone.ind.range.lob[2]))) +
    labs(title = paste0("Map of Lobster Fishing Effort for 2016"), x="Total landings per sqkm") +
    theme_bw()
  lobster.zone.2017 <- ggplot() +
    geom_sf(data=filter(zone.ind5,Year==2017), aes(fill = lobster_pressure)) +
    scale_fill_gradient2(low="#f7fbff",high="#2171b5",name="Lobster Fishing Pressure",
-                        na.value="gray90",limits=c(0,max(zone.ind5$lobster_pressure))) +
+                        na.value="gray90",limits=c(0,max(zone.ind.range.lob[2]))) +
    labs(title = paste0("Map of Lobster Fishing Effort for 2017"), x="Total landings per sqkm") +
    theme_bw()
  lobster.zone.2018 <- ggplot() +
    geom_sf(data=filter(zone.ind5,Year==2018), aes(fill = lobster_pressure)) +
    scale_fill_gradient2(low="#f7fbff",high="#2171b5",name="Lobster Fishing Pressure",
-                        na.value="gray90",limits=c(0,max(zone.ind5$lobster_pressure))) +
+                        na.value="gray90",limits=c(0,max(zone.ind.range.lob[2]))) +
    labs(title = paste0("Map of Lobster Fishing Effort for 2018"), x="Total landings per sqkm") +
    theme_bw()
  lobster.zone.2019 <- ggplot() +
    geom_sf(data=filter(zone.ind5,Year==2019), aes(fill = lobster_pressure)) +
    scale_fill_gradient2(low="#f7fbff",high="#2171b5",name="Lobster Fishing Pressure",
-                        na.value="gray90",limits=c(0,max(zone.ind5$lobster_pressure))) +
+                        na.value="gray90",limits=c(0,max(zone.ind.range.lob[2]))) +
    labs(title = paste0("Map of Lobster Fishing Effort for 2019"), x="Total landings per sqkm") +
    theme_bw()
  plot_grid_lobster <-plot_grid(lobster.zone.2012,lobster.zone.2013,lobster.zone.2014,lobster.zone.2015,lobster.zone.2016,lobster.zone.2017,lobster.zone.2018,lobster.zone.2019)
@@ -738,7 +752,6 @@ gis.dir <- "/Users/gcullinan//OneDrive - Duke University/MP Project/spatial-fish
  ggsave("Lobster_Effort_2017.png", plot = lobster.zone.2017, device = "png", path="Final_Figures_Tables/")
  ggsave("Lobster_Effort_2018.png", plot = lobster.zone.2018, device = "png", path="Final_Figures_Tables/")
  ggsave("Lobster_Effort_2019.png", plot = lobster.zone.2019, device = "png", path="Final_Figures_Tables/")
- 
  
  ############################### mapping conch catch by individual count ######################
  #join with the conch
@@ -756,55 +769,59 @@ gis.dir <- "/Users/gcullinan//OneDrive - Duke University/MP Project/spatial-fish
     summarise(conch_pressure=mean(conch_pressure)) %>% 
     filter(!grepl("FAD",zone_id))
  
- # Plot lobster pressure maps
- conch.zone.2012 <- ggplot() +
-    geom_sf(data=filter(zone.ind8,Year==2012), aes(fill = conch_pressure)) +
-   scale_fill_gradient2(low="#f7fbff",high="#2171b5",name="Conch Fishing Pressure",
-                        na.value="gray90",limits=c(0,max(zone.ind8$conch_pressure))) +
-   labs(title = paste0("Map of Conch Fishing Effort for 2012"), x="Total landings per sqkm") +
-    theme_bw()
+ #calculating the range for use in standardizing the scales of all the plots
+ zone.ind.range.conch <- range(zone.ind8$conch_pressure, na.rm = TRUE) 
+ zone.ind.range.conch #check to make sure it worked 
+ 
+ # Plot conch fishing pressure maps
+ conch.zone.2012 <- ggplot() + #initialize ggplot
+   geom_sf(data=filter(zone.ind8,Year==2012), aes(fill = conch_pressure)) + #use the geom_sf function in ggplot to make the map and fill it with the fishing pressure variable 
+   scale_fill_gradient2(low="#f7fbff",high="#2171b5",name="Conch Fishing Pressure", #format the legend
+                        na.value="gray90",limits=c(0,max(zone.ind.range.conch[2]))) + 
+   labs(title = paste0("Map of Conch Fishing Effort for 2012"), x="Total landings per sqkm") + #format the labels for the plot
+   theme_bw() #set the theme as blue and white
  conch.zone.2013 <- ggplot() +
-    geom_sf(data=filter(zone.ind8,Year==2013), aes(fill = conch_pressure)) +
+   geom_sf(data=filter(zone.ind8,Year==2013), aes(fill = conch_pressure)) +
    scale_fill_gradient2(low="#f7fbff",high="#2171b5",name="Conch Fishing Pressure",
-                        na.value="gray90",limits=c(0,max(zone.ind8$conch_pressure))) +
+                        na.value="gray90",limits=c(0,max(zone.ind.range.conch[2]))) +
    labs(title = paste0("Map of Conch Fishing Effort for 2013"), x="Total landings per sqkm") +
-    theme_bw() 
+   theme_bw() 
  conch.zone.2014 <- ggplot() +
-    geom_sf(data=filter(zone.ind8,Year==2014), aes(fill = conch_pressure)) +
+   geom_sf(data=filter(zone.ind8,Year==2014), aes(fill = conch_pressure)) +
    scale_fill_gradient2(low="#f7fbff",high="#2171b5",name="Conch Fishing Pressure",
-                        na.value="gray90",limits=c(0,max(zone.ind8$conch_pressure))) +
+                        na.value="gray90",limits=c(0,max(zone.ind.range.conch[2]))) +
    labs(title = paste0("Map of Conch Fishing Effort for 2014"), x="Total landings per sqkm") +
-    theme_bw()
+   theme_bw()
  conch.zone.2015 <- ggplot() +
-    geom_sf(data=filter(zone.ind8,Year==2015), aes(fill = conch_pressure)) +
+   geom_sf(data=filter(zone.ind8,Year==2015), aes(fill = conch_pressure)) +
    scale_fill_gradient2(low="#f7fbff",high="#2171b5",name="Conch Fishing Pressure",
-                        na.value="gray90",limits=c(0,max(zone.ind8$conch_pressure))) +
+                        na.value="gray90",limits=c(0,max(zone.ind.range.conch[2]))) +
    labs(title = paste0("Map of Conch Fishing Effort for 2015"), x="Total landings per sqkm") +
-    theme_bw()
+   theme_bw()
  conch.zone.2016 <- ggplot() +
-    geom_sf(data=filter(zone.ind8,Year==2016), aes(fill = conch_pressure)) +
+   geom_sf(data=filter(zone.ind8,Year==2016), aes(fill = conch_pressure)) +
    scale_fill_gradient2(low="#f7fbff",high="#2171b5",name="Conch Fishing Pressure",
-                        na.value="gray90",limits=c(0,max(zone.ind8$conch_pressure))) +
+                        na.value="gray90",limits=c(0,max(zone.ind.range.conch[2]))) +
    labs(title = paste0("Map of Conch Fishing Effort for 2016"), x="Total landings per sqkm") +
-    theme_bw()
+   theme_bw()
  conch.zone.2017 <- ggplot() +
-    geom_sf(data=filter(zone.ind8,Year==2017), aes(fill = conch_pressure)) +
+   geom_sf(data=filter(zone.ind8,Year==2017), aes(fill = conch_pressure)) +
    scale_fill_gradient2(low="#f7fbff",high="#2171b5",name="Conch Fishing Pressure",
-                        na.value="gray90",limits=c(0,max(zone.ind8$conch_pressure))) +
+                        na.value="gray90",limits=c(0,max(zone.ind.range.conch[2]))) +
    labs(title = paste0("Map of Conch Fishing Effort for 2017"), x="Total landings per sqkm") +
-    theme_bw()
+   theme_bw()
  conch.zone.2018 <- ggplot() +
-    geom_sf(data=filter(zone.ind8,Year==2018), aes(fill = conch_pressure)) +
+   geom_sf(data=filter(zone.ind8,Year==2018), aes(fill = conch_pressure)) +
    scale_fill_gradient2(low="#f7fbff",high="#2171b5",name="Conch Fishing Pressure",
-                        na.value="gray90",limits=c(0,max(zone.ind8$conch_pressure))) +
+                        na.value="gray90",limits=c(0,max(zone.ind.range.conch[2]))) +
    labs(title = paste0("Map of Conch Fishing Effort for 2018"), x="Total landings per sqkm") +
-    theme_bw()
+   theme_bw()
  conch.zone.2019 <- ggplot() +
-    geom_sf(data=filter(zone.ind8,Year==2019), aes(fill = conch_pressure)) +
+   geom_sf(data=filter(zone.ind8,Year==2019), aes(fill = conch_pressure)) +
    scale_fill_gradient2(low="#f7fbff",high="#2171b5",name="Conch Fishing Pressure",
-                        na.value="gray90",limits=c(0,max(zone.ind8$conch_pressure))) +
+                        na.value="gray90",limits=c(0,max(zone.ind.range.conch[2]))) +
    labs(title = paste0("Map of Conch Fishing Effort for 2019"), x="Total landings per sqkm") +
-    theme_bw()
+   theme_bw()
  plot_grid_conch<-plot_grid(conch.zone.2012,conch.zone.2013,conch.zone.2014,conch.zone.2015,conch.zone.2016,conch.zone.2017,conch.zone.2018,conch.zone.2019)
  
  # saving files
@@ -871,28 +888,48 @@ dotchart(fish.subset.group$Num.ind, labels=fish.subset.group$family,cex=.7,
          groups = fish.subset.group$Year, gcolor="black", color=fish.subset.group$color)
 ##################### assessing annual fishing effort by gear type and prepping for maps #################  
 # changing the character type and joining the fishing summaries with the spatial geometries
-fishing.zones.gear <-zone.fish.gear.year%>%
+fishing.zones.gear <-zone.fish.gear%>%
   mutate (zone_id = as.character(zone_id))
 
-zone.ind10 <- zone.ind.joiner %>% 
-  left_join(fishing.zones.gear)%>%
-  #mutate(area_km2 = area_m2/1000000)%>%
+zone.ind.joiner.2 <-zone.ind %>%
+  select(Name,zone_id,area_m2,area_km2,geometry)
+head(zone.ind.joiner.2)
+
+zone.ind10 <- zone.ind %>% 
+  left_join(fishing.zones.gear, by = "zone_id")%>%
+  mutate(area_km2 = area_m2/1000000)%>%
   mutate (fishing_pressure=weight.total/area_km2)%>%
-  select(Name,zone_id,Year,Gear,area_m2,area_km2,weight.total,fishing_pressure, geometry)%>%
-  rename(weight_kg=weight.total)%>%
-  group_by(Name,zone_id,Gear)%>%
-  summarize(gear.weight.total=sum(weight_kg,na.rm=T))
+  select(Name,zone_id,Gear,area_m2,area_km2,weight.total,fishing_pressure, geometry)%>%
+  rename(weight_kg=weight.total)
 head(zone.ind10)
 unique(zone.ind10$Gear)
+range(zone.ind10$fishing_pressure, na.rm=TRUE)
 
-# Plot fishing pressure maps
+# Plot fishing pressure maps by gear type 
 fish.zone.HL <- ggplot() +
   geom_sf(data=filter(zone.ind10,Gear=="HL"), aes( fill = fishing_pressure)) +
   scale_fill_gradient2(low="#f7fbff",high="#2171b5",name="Fishing Pressure",
-                       na.value="gray90",limits=c(0,max(zone.ind10$fishing_pressure))) +
-  labs(title = paste0("Map of Fishing Effort by Handline"), x="Total Landings per sqkm") +
+                       na.value="gray90",limits=c(0,250)) +
+  labs(title = paste0("Map of Fishing Effort by Hand Line"), x="Total Landings per sqkm") +
   theme_bw()
 plot(fish.zone.HL)
+
+fish.zone.FD <- ggplot() +
+  geom_sf(data=filter(zone.ind10,Gear=="FD"), aes( fill = fishing_pressure)) +
+  scale_fill_gradient2(low="#f7fbff",high="#2171b5",name="Fishing Pressure",
+                       na.value="gray90",limits=c(0,250)) +
+  labs(title = paste0("Map of Fishing Effort by FD"), x="Total Landings per sqkm") +
+  theme_bw()
+plot(fish.zone.FD)
+
+fish.zone.LL <- ggplot() +
+  geom_sf(data=filter(zone.ind10,Gear=="LL"), aes(fill = fishing_pressure)) +
+  scale_fill_gradient2(low="#f7fbff",high="#2171b5",name="Fishing Pressure",
+                       na.value="gray90",limits=c(0,250)) +
+  labs(title = paste0("Map of Fishing Effort by Long Line"), x="Total Landings per sqkm") +
+  theme_bw()
+plot(fish.zone.LL)
+
 ################## assessing annual lobster fishing effort by gear type and prepping for maps #################  
  
 lobster.zones.gear <-zone.lob.gear.year%>%
@@ -915,7 +952,6 @@ zone.ind12 <- zone.ind.joiner %>%
 head(zone.ind12) 
 
 ##################### visualization of sub-species means over the years ##################################
-
 #sample subset for a sample species 
 redhind.subset <- fish.species.year %>%
   group_by(Year)%>%
@@ -951,10 +987,6 @@ redhind.mean.year <-redhind.subset%>%
             mean.pct.wt=mean(pct.wt))
 head(redhind.mean.year)
 
-
-
-
-
 ################### seasonal plots for fish, lobsters, and conch, no zones########################
 #looking at fish monthly season totals
 fish.months.season <- zones.fish %>% 
@@ -974,7 +1006,7 @@ fishing_seasons+geom_point(color="blue",size=4)+ylim(0,2500)+
         axis.title.y = element_text(size=25, face="bold"),
         plot.title = element_text(size=25, face="bold"))+
   scale_x_continuous(breaks = seq(0, 12, by = 1))+
-  labs(x="Month", y="Total Weight (lb)")+
+  labs(x="Month", y="Total Weight (kg)")+
   ggtitle("Plot Depicting Seasonality of Fish Caught from 2012-2019")
 ggsave("Fish_Seasonality_2012-2019.png", path="Final_Figures_Tables/", scale=1.5)
 
@@ -1005,18 +1037,18 @@ fishing_years_sum+geom_point(color="blue",size=4)+ylim(0,4000)+
         axis.title.y = element_text(size=25, face="bold"),
         plot.title = element_text(size=25, face="bold"))+
   scale_x_continuous(breaks = seq(2012,2019 , by = 1))+
-  labs(x="Year", y="Total Weight (lb)")+
+  labs(x="Year", y="Total Weight (kg)")+
   ggtitle("Plot Depicting Yearly Totals of Fish Caught from 2012-2019")
 ggsave("Fish_Year_Totals_2012-2019.png", path="Final_Figures_Tables/", scale=1.5)
 
-#looking at lobsters
+#looking at lobsters monthly to see if thers is seasonality
 lob.months.season <- zones.lob %>% 
   group_by(Month)%>% 
   summarize(ind.total=sum(ind.per.zone,na.rm = T),
             Num.Trips=n_distinct(Trip_ID))%>%
   mutate(avg.ind.per.trip=ind.total/Num.Trips)
 head(lob.months.season)
-plot(lob.months.season$ind.total~zone.lob.months.season$Month)
+plot(lob.months.season$ind.total~lob.months.season$Month)
 
 #using ggplot to create maps of lobster seasonality from 2012-2019
 lobster_season<-ggplot(lob.months.season, mapping = aes(x=Month, y=ind.total))
@@ -1032,6 +1064,29 @@ lobster_season+geom_point(color="blue",size=4)+
   ggtitle("Plot Depicting Lobster Seasonality from 2012-2019")
 ggsave("Lobster_Seasonality_2012-2019.png", path="Final_Figures_Tables/", scale=1.5)
 
+#looking at lobsters yearly totals to track any yield changes 
+lob.years <- zones.lob %>% 
+  group_by(Year)%>% 
+  summarize(ind.total=sum(ind.per.zone,na.rm = T),
+            Num.Trips=n_distinct(Trip_ID))%>%
+  mutate(avg.ind.per.trip=ind.total/Num.Trips)
+head(lob.years)
+plot(lob.years$ind.total~lob.years$Year)
+
+#using ggplot to create maps of lobster seasonality from 2012-2019
+lobster_years_sum<-ggplot(lob.years, mapping = aes(x=Year, y=ind.total))
+lobster_years_sum+geom_point(color="blue",size=4)+
+  theme(axis.text.x = element_text(size=20),
+        axis.text.y = element_text(size=20),
+        axis.title.x = element_text(size=25, face="bold"),
+        axis.title.y = element_text(size=25, face="bold"),
+        plot.title = element_text(size=25, face="bold"))+
+  scale_x_continuous(breaks = seq(2012,2019, by = 1))+
+  scale_y_continuous(breaks = seq(0,7000, by = 1000))+
+  labs(x="Year", y="Total Number of Individuals")+
+  ggtitle("Plot Depicting Lobster Yield Totals from 2012-2019")
+ggsave("Lobster_Yield_2012-2019.png", path="Final_Figures_Tables/", scale=1.5)
+
 #looking at conch
 conch.months.season <- zones.conch %>% 
   group_by(Month)%>% 
@@ -1039,7 +1094,8 @@ conch.months.season <- zones.conch %>%
             Num.Trips=n_distinct(Trip_ID))%>%
   mutate(avg.ind.per.trip=ind.total/Num.Trips)
 head(conch.months.season)
-plot(conch.months.season$ind.total~zone.conch.months.season$Month)
+plot(conch.months.season$ind.total~conch.months.season$Month)
+
 #using ggplot to create maps of conch seasonality from 2012-2019
 conch_season<-ggplot(conch.months.season, mapping = aes(x=Month, y=ind.total))
 conch_season+geom_point(color="blue",size=4)+ylim(0,2500)+
@@ -1049,8 +1105,28 @@ conch_season+geom_point(color="blue",size=4)+ylim(0,2500)+
         axis.title.y = element_text(size=25, face="bold"),
         plot.title = element_text(size=25, face="bold"))+
   scale_x_continuous(breaks = seq(0,12, by = 1))+
-  
   labs(x="Month", y="Total Number of Individuals")+
   ggtitle("Plot Depicting Conch Seasonality from 2012-2019")
 ggsave("Conch_Seasonality_2012-2019.png", path="Final_Figures_Tables/", scale=1.5)
 
+#looking at conch
+conch.years <- zones.conch %>% 
+  group_by(Year)%>% 
+  summarize(ind.total=sum(ind.per.zone,na.rm = T),
+            Num.Trips=n_distinct(Trip_ID))%>%
+  mutate(avg.ind.per.trip=ind.total/Num.Trips)
+head(conch.years)
+plot(conch.years$ind.total~conch.years$Year)
+
+#using ggplot to create maps of conch seasonality from 2012-2019
+conch_years_sum<-ggplot(conch.years, mapping = aes(x=Year, y=ind.total))
+conch_years_sum+geom_point(color="blue",size=4)+ylim(0,3000)+
+  theme(axis.text.x = element_text(size=20),
+        axis.text.y = element_text(size=20),
+        axis.title.x = element_text(size=25, face="bold"),
+        axis.title.y = element_text(size=25, face="bold"),
+        plot.title = element_text(size=25, face="bold"))+
+  scale_x_continuous(breaks = seq(2012,2019, by = 1))+
+  labs(x="Year", y="Total Number of Individuals")+
+  ggtitle("Plot Depicting Conch Total Yield from 2012-2019")
+ggsave("Conch_Year_Totals_2012-2019.png", path="Final_Figures_Tables/", scale=1.5)
