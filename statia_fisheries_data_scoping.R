@@ -5,6 +5,8 @@ library(ggplot2)
 #install.packages("cowplot")
 library(cowplot)
 library(tidyverse)
+#library(psych)
+#library(plyr)
 
 ###################################### Import the Data ##############################
 input.dir <- '~/OneDrive - Duke University/MP Project/spatial-fisheries-analysis/Data/' #set the import directory
@@ -301,7 +303,8 @@ zones.lob <- log.data %>% #rename the lobster zones from the log data
  zone.lob.month <- zones.lob %>% 
    group_by(Year,Month,zone_id)%>% 
    summarize(ind.total=sum(ind.per.zone,na.rm = T),
-             Num.Trips=n_distinct(Trip_ID))%>%
+             Num.Trips=n_distinct(Trip_ID),
+             mean.ind=mean(ind.total/Num.Trips, na.rm=T))%>%
    mutate(avg.ind.per.trip=ind.total/Num.Trips)
  head(zone.lob.month)
  
@@ -540,7 +543,7 @@ conch.length.thickness.year<-log.data.C%>%
             mean_lip_thickness=mean(Lip_thickness_.mm.,na.rm=T),
             samp.num.ind=n())
 head(conch.length.thickness.year)
-
+#need to do the standard deviations for the conch 
 #looking at further summary statistics involving conch sex, shell length, and lip thickness 
 #for each month
 conch.length.thickness.month<-log.data.C%>%
@@ -660,7 +663,8 @@ gis.dir <- "/Users/gcullinan//OneDrive - Duke University/MP Project/spatial-fish
  plot(fish.zone.2017)
  plot(fish.zone.2018)
  plot(fish.zone.2019)
- 
+
+ getwd()
  # saving files
  ggsave("Fishing_Effort_2012-2019.png", plot = plot_grid_fish, device = "png", path="Final_Figures_Tables/",scale = 1.5,width = 12, height = 12, units="in")
  ggsave("Fishing_Effort_2012.png", plot = fish.zone.2012, device = "png", path="Final_Figures_Tables/")
@@ -905,6 +909,11 @@ head(zone.ind10)
 unique(zone.ind10$Gear)
 range(zone.ind10$fishing_pressure, na.rm=TRUE)
 
+zone.gear.joiner <-zone.ind10 %>%
+  filter(Gear=="HL")%>%
+  select(Name,zone_id,area_m2,area_km2,geometry)
+head(zone.gear.joiner)
+
 # Plot fishing pressure maps by gear type 
 fish.zone.HL <- ggplot() +
   geom_sf(data=filter(zone.ind10,Gear=="HL"), aes( fill = fishing_pressure)) +
@@ -992,77 +1001,135 @@ head(redhind.mean.year)
 fish.months.season <- zones.fish %>% 
   group_by(Month)%>% 
   summarize(weight.total=sum(weight.per.zone,na.rm = T),
-            Num.Trips=n_distinct(Trip_ID))%>%
-  mutate(avg.weight.per.trip=weight.total/Num.Trips)#summerize by the total amount fo fish caught in that zone for that month
+            Num.Trips=n_distinct(Trip_ID, na.rm=T), 
+            avg.wt.per.trip = mean((weight.total/Num.Trips), na.rm=T),
+            sd.avg.wt=sd(c(avg.wt.per.trip, na.rm=T)),
+            n=as.numeric(sum(!is.na(`Weight_(kg)`))),
+            se.avg.wt = (sd.avg.wt)/(sqrt(n)))%>%
+  mutate(ci.upper=avg.wt.per.trip+sd.avg.wt,
+         ci.lower=avg.wt.per.trip-sd.avg.wt)
 head(fish.months.season)
 plot(fish.months.season$weight.total~fish.months.season$Month, 
      col=fish.months.season$Month)
-#using ggplot to create better looking plots of monthly seasonality
-fishing_seasons<-ggplot(fish.months.season, mapping = aes(x=Month, y=weight.total))
-fishing_seasons+geom_point(color="blue",size=4)+ylim(0,2500)+
+plot(fish.months.season$avg.wt.per.trip~fish.months.season$Month, 
+     col=fish.months.season$Month)
+
+fishing_seasons_sum<-ggplot(fish.months.season, mapping = aes(x=Month, y=weight.total))
+fishing_seasons_sum+geom_point(color="blue",size=6)+ylim(0,2500)+
   theme(axis.text.x = element_text(size=20),
         axis.text.y = element_text(size=20),
         axis.title.x = element_text(size=25, face="bold"),
         axis.title.y = element_text(size=25, face="bold"),
-        plot.title = element_text(size=25, face="bold"))+
+        plot.title = element_text(size=30, face="bold"))+
   scale_x_continuous(breaks = seq(0, 12, by = 1))+
   labs(x="Month", y="Total Weight (kg)")+
-  ggtitle("Plot Depicting Seasonality of Fish Caught from 2012-2019")
-ggsave("Fish_Seasonality_2012-2019.png", path="Final_Figures_Tables/", scale=1.5)
+  ggtitle("Seasonality of Total Weight of Fish Caught from 2012-2019")
+ggsave("Fish_Seasonality_Sum_2012-2019.png", path="Final_Figures_Tables/",width=14, height=9, units=c("in"))
 
-#looking at variations per year per zone for amount of fish caught 
-fish.years.zones <- zones.fish %>% 
-  group_by(Year,zone_id)%>% 
-  summarize(weight.total=sum(weight.per.zone,na.rm = T),
-            Num.Trips=n_distinct(Trip_ID))%>%
-  mutate(avg.weight.per.trip=weight.total/Num.Trips)#summerize by the total amount fo fish caught in that zone for that month
-head(fish.years.zones)
-plot(fish.years.zones$weight.total~fish.years.zones$zone_id, 
-     col=fish.years.zones$Year)
+fishing_seasons_avg<-ggplot(fish.months.season, mapping = aes(x=Month, y=avg.wt.per.trip))
+fishing_seasons_avg+
+  geom_errorbar(aes(ymin=ci.lower, ymax=ci.upper), width=1 )+
+  geom_point(color="blue", size=6)+
+  geom_hline(yintercept = 0) +
+  ylim(0,70)+
+  theme(axis.text.x = element_text(size=20),
+        axis.text.y = element_text(size=20),
+        axis.title.x = element_text(size=25, face="bold"),
+        axis.title.y = element_text(size=25, face="bold"),
+        plot.title = element_text(size=30, face="bold"))+
+  scale_x_continuous(breaks = seq(0, 12, by = 1))+
+  labs(x="Month", y="Average Weight per Trip (kg)")+
+  ggtitle("Seasonality of Average Catch per Trip from 2012-2019")
+ggsave("Fish_Seasonality_Avg_2012-2019.png", path="Final_Figures_Tables/",width=14, height=9, units=c("in"))
+
 #looking at the total amount of fish caught each year and looking for total changes
 fish.years <- zones.fish %>% 
   group_by(Year)%>% 
   summarize(weight.total=sum(weight.per.zone,na.rm = T),
-            Num.Trips=n_distinct(Trip_ID))%>%
-  mutate(avg.weight.per.trip=weight.total/Num.Trips)#summerize by the total amount fo fish caught in that zone for that month
+            Num.Trips=n_distinct(Trip_ID, na.rm=T), 
+            avg.wt.per.trip = mean((weight.total/Num.Trips), na.rm=T),
+            sd.avg.wt=sd(c(avg.wt.per.trip, na.rm=T)),
+            n=as.numeric(sum(!is.na(`Weight_(kg)`))),
+            se.avg.wt = (sd.avg.wt)/(sqrt(n)))%>%
+  mutate(ci.upper=avg.wt.per.trip+sd.avg.wt,
+         ci.lower=avg.wt.per.trip-sd.avg.wt)
 head(fish.years)
 plot(fish.years$weight.total~fish.years$Year, 
-     col=fish.years.zones$Year)
+     col=fish.years$Year)
 #using ggplot to create better looking plots of yearly summaries 
 fishing_years_sum<-ggplot(fish.years, mapping = aes(x=Year, y=weight.total))
-fishing_years_sum+geom_point(color="blue",size=4)+ylim(0,4000)+
+fishing_years_sum+geom_point(color="blue",size=6)+ylim(0,4000)+
   theme(axis.text.x = element_text(size=20),
         axis.text.y = element_text(size=20),
         axis.title.x = element_text(size=25, face="bold"),
         axis.title.y = element_text(size=25, face="bold"),
-        plot.title = element_text(size=25, face="bold"))+
+        plot.title = element_text(size=30, face="bold"))+
   scale_x_continuous(breaks = seq(2012,2019 , by = 1))+
   labs(x="Year", y="Total Weight (kg)")+
-  ggtitle("Plot Depicting Yearly Totals of Fish Caught from 2012-2019")
-ggsave("Fish_Year_Totals_2012-2019.png", path="Final_Figures_Tables/", scale=1.5)
+  ggtitle("Total Weight of Fish Caught Each Year from 2012-2019")
+ggsave("Fish_Year_Totals_2012-2019.png", path="Final_Figures_Tables/", width=14, height=9, units=c("in"))
+
+#using ggplot to create better looking plots of yearly summaries 
+fishing_years_avg<-ggplot(fish.years, mapping = aes(x=Year, y=avg.wt.per.trip))
+fishing_years_avg+
+  geom_errorbar(aes(ymin=ci.lower, ymax=ci.upper), width=1 )+
+  geom_point(color="blue", size=6)+
+  geom_hline(yintercept = 0) +
+  ylim(0,60)+
+  theme(axis.text.x = element_text(size=20),
+        axis.text.y = element_text(size=20),
+        axis.title.x = element_text(size=25, face="bold"),
+        axis.title.y = element_text(size=25, face="bold"),
+        plot.title = element_text(size=30, face="bold"))+
+  scale_x_continuous(breaks = seq(2012,2019 , by = 1))+
+  labs(x="Year", y="Average Weight per Trip (kg)")+
+  ggtitle("Average Catch per Year from 2012-2019")
+ggsave("Fish_Year_Avg_2012-2019.png", path="Final_Figures_Tables/", width=14, height=9, units=c("in"))
 
 #looking at lobsters monthly to see if thers is seasonality
 lob.months.season <- zones.lob %>% 
   group_by(Month)%>% 
-  summarize(ind.total=sum(ind.per.zone,na.rm = T),
-            Num.Trips=n_distinct(Trip_ID))%>%
-  mutate(avg.ind.per.trip=ind.total/Num.Trips)
+  summarize(ind.total=sum(ind.per.zone, na.rm=T),
+            Num.Trips=n_distinct(Trip_ID),
+            avg.ind.per.trip = mean((ind.total/Num.Trips), na.rm=T),
+            sd.avg.ind=sd(c(avg.ind.per.trip, na.rm=T)),
+            n=as.numeric(sum(!is.na(Num_ind))),
+            se.avg.ind = (sd.avg.ind)/(sqrt(n)))%>%
+  mutate(ci.upper=avg.ind.per.trip+sd.avg.ind,
+         ci.lower=avg.ind.per.trip-sd.avg.ind)
 head(lob.months.season)
 plot(lob.months.season$ind.total~lob.months.season$Month)
 
 #using ggplot to create maps of lobster seasonality from 2012-2019
-lobster_season<-ggplot(lob.months.season, mapping = aes(x=Month, y=ind.total))
-lobster_season+geom_point(color="blue",size=4)+
+lobster_season_sum<-ggplot(lob.months.season, mapping = aes(x=Month, y=ind.total))
+lobster_season_sum+geom_point(color="blue",size=6)+
   theme(axis.text.x = element_text(size=20),
         axis.text.y = element_text(size=20),
         axis.title.x = element_text(size=25, face="bold"),
         axis.title.y = element_text(size=25, face="bold"),
-        plot.title = element_text(size=25, face="bold"))+
+        plot.title = element_text(size=30, face="bold"))+
   scale_x_continuous(breaks = seq(0,12, by = 1))+
   scale_y_continuous(breaks = seq(0,5500, by = 1000))+
   labs(x="Month", y="Total Number of Individuals")+
-  ggtitle("Plot Depicting Lobster Seasonality from 2012-2019")
-ggsave("Lobster_Seasonality_2012-2019.png", path="Final_Figures_Tables/", scale=1.5)
+  ggtitle("Seasonality of Total Number of Lobsters Caught from 2012-2019")
+ggsave("Lobster_Seasonality_Sum_2012-2019.png", path="Final_Figures_Tables/", width=14, height=9, units=c("in"))
+
+#average lobster catch per month for all of the years summed from 2012-2019
+lobster_season_avg<-ggplot(lob.months.season, mapping = aes(x=Month, y=avg.ind.per.trip))
+lobster_season_avg+
+  geom_errorbar(aes(ymin=ci.lower, ymax=ci.upper), width=1 )+
+  geom_point(color="blue", size=6)+
+  geom_hline(yintercept = 0) +
+  ylim(0,90)+
+  theme(axis.text.x = element_text(size=20),
+        axis.text.y = element_text(size=20),
+        axis.title.x = element_text(size=25, face="bold"),
+        axis.title.y = element_text(size=25, face="bold"),
+        plot.title = element_text(size=30, face="bold"))+
+  scale_x_continuous(breaks = seq(0, 12, by = 1))+
+  labs(x="Month", y="Average Number of Individuals Per Trip")+
+  ggtitle("Seasonality of Average Catch per Trip from 2012-2019")
+ggsave("Fish_Seasonality_Avg_2012-2019.png", path="Final_Figures_Tables/",width=14, height=9, units=c("in"))
 
 #looking at lobsters yearly totals to track any yield changes 
 lob.years <- zones.lob %>% 
