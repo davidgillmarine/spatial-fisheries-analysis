@@ -694,7 +694,7 @@ gis.dir <- "/Users/gcullinan//OneDrive - Duke University/MP Project/spatial-fish
                         na.value="gray90",limits=c(0,max(zone.ind.range.fish[2]))) +
    labs(title = paste0("Map of Fishing Effort for 2019"), x="Total Landings per sqkm", y=NULL) +  #create the correct labels for the plot
    theme_bw()
- plot_grid_fish<-plot_grid(fish.zone.2012,fish.zone.2013,fish.zone.2014, fish.zone.2015, fish.zone.2016, fish.zone.2017, fish.zone.2018, fish.zone.2019)
+ plot_grid_fish<-plot_grid(fish.zone.2012,fish.zone.2013,fish.zone.2014, fish.zone.2015, fish.zone.2016, fish.zone.2017, fish.zone.2018)
  plot(fish.zone.2012)
  plot(fish.zone.2013)
  plot(fish.zone.2014)
@@ -705,7 +705,7 @@ gis.dir <- "/Users/gcullinan//OneDrive - Duke University/MP Project/spatial-fish
  plot(fish.zone.2019)
 
  # saving files
- ggsave("Fishing_Effort_2012-2019.png", plot = plot_grid_fish, device = "png", path="Final_Figures_Tables/",scale = 1.25, width=12, height=8, units="in")
+ ggsave("Fishing_Effort_2012-2018.png", plot = plot_grid_fish, device = "png", path="Final_Figures_Tables/",scale = 1.25, width=12, height=8, units="in")
  ggsave("Fishing_Effort_2012.png", plot = fish.zone.2012, device = "png", path="Final_Figures_Tables/")
  ggsave("Fishing_Effort_2013.png", plot = fish.zone.2013, device = "png", path="Final_Figures_Tables/")
  ggsave("Fishing_Effort_2014.png", plot = fish.zone.2014, device = "png", path="Final_Figures_Tables/")
@@ -807,10 +807,10 @@ gis.dir <- "/Users/gcullinan//OneDrive - Duke University/MP Project/spatial-fish
                         na.value="gray90",limits=c(0,max(zone.ind.range.lob[2]))) +
    labs(title = paste0("Map of Lobster Fishing Effort for 2019"), x="Total landings per sqkm", y=NULL) +
    theme_bw()
- plot_grid_lobster <-plot_grid(lobster.zone.2012,lobster.zone.2013,lobster.zone.2014,lobster.zone.2015,lobster.zone.2016,lobster.zone.2017,lobster.zone.2018,lobster.zone.2019)
+ plot_grid_lobster <-plot_grid(lobster.zone.2012,lobster.zone.2013,lobster.zone.2014,lobster.zone.2015,lobster.zone.2016,lobster.zone.2017,lobster.zone.2018)
  
  # saving files
- ggsave("Lobster_Effort_2012-2019.png", plot = plot_grid_lobster, device = "png", path="Final_Figures_Tables/",scale = 1.25, width=12, height=8, units="in")
+ ggsave("Lobster_Effort_2012-2018.png", plot = plot_grid_lobster, device = "png", path="Final_Figures_Tables/",scale = 1.25, width=12, height=8, units="in")
  ggsave("Lobster_Effort_2012.png", plot = lobster.zone.2012, device = "png", path="Final_Figures_Tables/")
  ggsave("Lobster_Effort_2013.png", plot = lobster.zone.2013, device = "png", path="Final_Figures_Tables/")
  ggsave("Lobster_Effort_2014.png", plot = lobster.zone.2014, device = "png", path="Final_Figures_Tables/")
@@ -913,10 +913,10 @@ gis.dir <- "/Users/gcullinan//OneDrive - Duke University/MP Project/spatial-fish
                         na.value="gray90",limits=c(0,max(zone.ind.range.conch[2]))) +
    labs(title = paste0("Map of Conch Fishing Effort for 2019"), x="Total landings per sqkm", y=NULL) +
    theme_bw()
- plot_grid_conch<-plot_grid(conch.zone.2012,conch.zone.2013,conch.zone.2014,conch.zone.2015,conch.zone.2016,conch.zone.2017,conch.zone.2018,conch.zone.2019)
+ plot_grid_conch<-plot_grid(conch.zone.2012,conch.zone.2013,conch.zone.2014,conch.zone.2015,conch.zone.2016,conch.zone.2017,conch.zone.2018)
  
  # saving files
- ggsave("Conch_Effort_2012-2019.png", plot = plot_grid_conch, device = "png", path="Final_Figures_Tables/",scale = 1.25,width = 12, height = 8,units="in")
+ ggsave("Conch_Effort_2012-2018.png", plot = plot_grid_conch, device = "png", path="Final_Figures_Tables/",scale = 1.25,width = 12, height = 8,units="in")
  ggsave("Conch_Effort_2012.png", plot = conch.zone.2012, device = "png", path="Final_Figures_Tables/")
  ggsave("Conch_Effort_2013.png", plot = conch.zone.2013, device = "png", path="Final_Figures_Tables/")
  ggsave("Conch_Effort_2014.png", plot = conch.zone.2014, device = "png", path="Final_Figures_Tables/")
@@ -926,57 +926,132 @@ gis.dir <- "/Users/gcullinan//OneDrive - Duke University/MP Project/spatial-fish
  ggsave("Conch_Effort_2018.png", plot = conch.zone.2018, device = "png", path="Final_Figures_Tables/")
  ggsave("Conch_Effort_2019.png", plot = conch.zone.2019, device = "png", path="Final_Figures_Tables/")
  
- ############################## potential bar plots for family stats ##############################
-
-unique(fish.family.year$family) 
-barplot(Num.ind~Year, data=family.subset)
- 
- counts <- tapply(fish.family.year$Num.ind, list(fish.family.year$Year, fish.family.year$family), sum)
- barplot(counts, main="Number of Individuals Caught per Family per Year",
-         xlab="Scientific Family Name", ylab="Number of Individuals", ylim=c(0, 2500),
-         col=c("red", "orange","blue","darkblue","green", "darkgreen", "purple", "deeppink"),
-         legend = rownames(counts), beside=TRUE,cex=.7, cex.axis=1, cex.lab =1.5,cex.main=2)
-
- 
-fish.family.year.group<-fish.family.year[order(fish.family.year$Year),] 
-fish.family.year.group$color[fish.family.year.group$Year==2012] <- "red"
-fish.family.year.group$color[fish.family.year.group$Year==2013] <- "orange"
-fish.family.year.group$color[fish.family.year.group$Year==2014] <- "blue"
-fish.family.year.group$color[fish.family.year.group$Year==2015] <- "darkblue"
-fish.family.year.group$color[fish.family.year.group$Year==2016] <- "green"
-fish.family.year.group$color[fish.family.year.group$Year==2017] <- "darkgreen"
-fish.family.year.group$color[fish.family.year.group$Year==2018] <- "purple"
-fish.family.year.group$color[fish.family.year.group$Year==2019] <- "deeppink"
-
-dotchart(fish.family.year.group$Num.ind, labels=fish.family.year.group$family,cex=.7,
-         cex.axis=1.25, cex.lab =2,cex.main=2, 
-         groups = fish.family.year.group$Year, gcolor="black", color=fish.family.year.group$color)
-
-############################### families of interest plots ########################################
-family.subset <- fish.family.year %>%
+ ##################### visualization of sub-species means over the years ##################################
+family.subset <- fish.species %>%
   group_by(Year)%>%
   filter(family %in% c("Acanthuridae","Lutjanidae","Scaridae","Serranidae"))
 head(family.subset)
 
-family.counts <- tapply(family.subset$Num.ind, list(family.subset$Year, family.subset$family), sum)
+parrotfish.weight.year <-mean.family.weight%>%
+   group_by(Year)%>%
+   filter(family=="Scaridae", Year<2019)
+head(parrotfish.weight.year)
+
+redhind.weight.year <-mean.fish.weight%>%
+   group_by(Year)%>%
+   filter(Species_latin_name=="Epinephelus guttatus", Year<2019)
+head(redhind.weight.year)
+
+family.counts <- tapply(mean.family.weight$num.samples, list(mean.family.weight$Year, mean.family.weight$family), sum)
 barplot(family.counts, main="Number of Individuals Caught per Family per Year",
-        xlab="Scientific Family Name", ylab="Number of Individuals", ylim=c(0, 2500),
+        xlab="Scientific Family Name", ylab="Number of Individuals", ylim=c(0, 60),
         col=c("red", "orange","blue","darkblue","green", "darkgreen", "purple", "deeppink"),
         legend = rownames(family.counts), beside=TRUE,cex=.7, cex.axis=1, cex.lab =1.5,cex.main=2)
 
-fish.subset.group<-family.subset[order(family.subset$Year),] 
-fish.subset.group$color[fish.subset.group$Year==2012] <- "red"
-fish.subset.group$color[fish.subset.group$Year==2013] <- "orange"
-fish.subset.group$color[fish.subset.group$Year==2014] <- "blue"
-fish.subset.group$color[fish.subset.group$Year==2015] <- "darkblue"
-fish.subset.group$color[fish.subset.group$Year==2016] <- "green"
-fish.subset.group$color[fish.subset.group$Year==2017] <- "darkgreen"
-fish.subset.group$color[fish.subset.group$Year==2018] <- "purple"
-fish.subset.group$color[fish.subset.group$Year==2019] <- "deeppink"
+parrotfish.counts<- tapply(parrotfish.weight.year$num.samples, list(parrotfish.weight.year$Year), sum)
+barplot(parrotfish.counts, main="Number of Parrotfish Caught per Year",
+        xlab="Year", ylab="Number of Individuals", ylim=c(0, 50),
+        col=c("darkblue"),
+        legend = NULL, beside=TRUE,cex=.7, cex.axis=1, cex.lab =1.5,cex.main=2)
+parrotfish<-ggplot(parrotfish.weight.year,aes(Year))
+parrotfish+geom_bar(aes(weight=num.samples))
 
-dotchart(fish.subset.group$Num.ind, labels=fish.subset.group$family,cex=.7,
-         cex.axis=1.25, cex.lab =2,cex.main=2, 
-         groups = fish.subset.group$Year, gcolor="black", color=fish.subset.group$color)
+#sample subset for redhind
+redhind.subset <- fish.species %>%
+   group_by(Species_latin_name,Year) %>% 
+   summarise(ind.fish.weight=sum(ind.fish.weight,na.rm = T),
+             num.samples=n_distinct(Sample_ID),
+             mean.fish.weight=mean(ind.fish.weight/num.samples,na.rm = T),
+             sd.avg.wt=sd(c(mean.fish.weight, na.rm=T)),
+             se.avg.wt = (sd.avg.wt)/(sqrt(num.samples)))%>%
+   mutate(ci.upper=mean.fish.weight+sd.avg.wt,
+          ci.lower=mean.fish.weight-sd.avg.wt,
+          se.lower=mean.fish.weight+se.avg.wt,
+          se.upeer=mean.fish.weight-se.avg.wt)%>% 
+   filter(!is.na(Species_latin_name),
+          Species_latin_name %in% c("Epinephelus guttatus", na.rm=T),
+          Year<2019)
+head(redhind.subset)
+
+redhind_years_sum<-ggplot(redhind.subset, mapping = aes(x=Year, y=ind.fish.weight))
+redhind_years_sum+geom_point(color="blue",size=6)+ylim(0,200)+
+   theme(axis.text.x = element_text(size=20),
+         axis.text.y = element_text(size=20),
+         axis.title.x = element_text(size=25, face="bold"),
+         axis.title.y = element_text(size=25, face="bold"),
+         plot.title = element_text(size=30, face="bold"))+
+   scale_x_continuous(breaks = seq(2012,2018 , by = 1))+
+   labs(x="Year", y="Total Weight (kg)")+
+   ggtitle("Sample Weight of Redhind Caught per Year From 2012-2018")
+ggsave("Redhind_Year_Totals_2012-2018.png", path="Final_Figures_Tables/", width=14, height=9, units=c("in"))
+
+redhind_years_avg<-ggplot(redhind.subset, mapping = aes(x=Year, y=mean.fish.weight))
+redhind_years_avg+
+   geom_errorbar(aes(ymin=mean.fish.weight-se.avg.wt, ymax=mean.fish.weight+se.avg.wt), 
+                 width=0.0, size=2, color="black") +
+   geom_errorbar(aes(ymin=mean.fish.weight-1.96*se.avg.wt, ymax=mean.fish.weight+1.96*se.avg.wt), 
+                 width=0.0, size=0.5, color="black")+
+   geom_point(color="blue", size=2)+
+   geom_hline(yintercept = 0) +
+   ylim(0,5)+
+   theme(axis.text.x = element_text(size=20),
+         axis.text.y = element_text(size=20),
+         axis.title.x = element_text(size=25, face="bold"),
+         axis.title.y = element_text(size=25, face="bold"),
+         plot.title = element_text(size=30, face="bold"))+
+   scale_x_continuous(breaks = seq(2012,2018 , by = 1))+
+   labs(x="Year", y="Average Weight per Trip (kg)")+
+   ggtitle("Sample Average Redhind Catch per Trip per Year From 2012-2018")
+ggsave("Redhind_Year_Avg_2012-2018.png", path="Final_Figures_Tables/", width=14, height=9, units=c("in"))
+
+#sample subset for parrotfish
+parrotfish.subset <- fish.species %>%
+   group_by(family,Year) %>% 
+   summarise(ind.fish.weight=sum(ind.fish.weight,na.rm = T),
+             num.samples=n_distinct(Sample_ID),
+             mean.fish.weight=mean(ind.fish.weight/num.samples,na.rm = T),
+             sd.avg.wt=sd(c(mean.fish.weight, na.rm=T)),
+             se.avg.wt = (sd.avg.wt)/(sqrt(num.samples)))%>%
+   mutate(ci.upper=mean.fish.weight+sd.avg.wt,
+          ci.lower=mean.fish.weight-sd.avg.wt,
+          se.lower=mean.fish.weight+se.avg.wt,
+          se.upeer=mean.fish.weight-se.avg.wt)%>% 
+   filter(!is.na(family),
+          family %in% c("Scaridae", na.rm=T),
+          Year<2019)
+head(parrotfish.subset)
+
+parrotfish_years_sum<-ggplot(parrotfish.subset, mapping = aes(x=Year, y=ind.fish.weight))
+parrotfish_years_sum+geom_point(color="blue",size=6)+ylim(0,100)+
+   theme(axis.text.x = element_text(size=20),
+         axis.text.y = element_text(size=20),
+         axis.title.x = element_text(size=25, face="bold"),
+         axis.title.y = element_text(size=25, face="bold"),
+         plot.title = element_text(size=30, face="bold"))+
+   scale_x_continuous(breaks = seq(2012,2018 , by = 1))+
+   labs(x="Year", y="Total Weight (kg)")+
+   ggtitle("Sample Weight of Parrotfish Caught per Year From 2012-2018")
+ggsave("Parrotfish_Year_Totals_2012-2018.png", path="Final_Figures_Tables/", width=14, height=9, units=c("in"))
+
+parrotfish_years_avg<-ggplot(parrotfish.subset, mapping = aes(x=Year, y=mean.fish.weight))
+parrotfish_years_avg+
+   geom_errorbar(aes(ymin=mean.fish.weight-se.avg.wt, ymax=mean.fish.weight+se.avg.wt), 
+                 width=0.0, size=2, color="black") +
+   geom_errorbar(aes(ymin=mean.fish.weight-1.96*se.avg.wt, ymax=mean.fish.weight+1.96*se.avg.wt), 
+                 width=0.0, size=0.5, color="black")+
+   geom_point(color="blue", size=2)+
+   geom_hline(yintercept = 0) +
+   ylim(0,3)+
+   theme(axis.text.x = element_text(size=20),
+         axis.text.y = element_text(size=20),
+         axis.title.x = element_text(size=25, face="bold"),
+         axis.title.y = element_text(size=25, face="bold"),
+         plot.title = element_text(size=30, face="bold"))+
+   scale_x_continuous(breaks = seq(2012,2018 , by = 1))+
+   labs(x="Year", y="Average Weight per Trip (kg)")+
+   ggtitle("Sample Average Parrotfish Catch per Trip per Year From 2012-2018")
+ggsave("Parrotfish_Year_Avg_2012-2018.png", path="Final_Figures_Tables/", width=14, height=9, units=c("in"))
+
 ##################### assessing annual fishing effort by gear type and prepping for maps #################  
 # changing the character type and joining the fishing summaries with the spatial geometries
 gis.dir <- "/Users/gcullinan//OneDrive - Duke University/MP Project/spatial-fisheries-analysis/Data/Fisheries_Zones/"
@@ -1224,46 +1299,12 @@ plot(conch.zone.PT)
 
 plot_grid_conch_gear<-plot_grid(conch.zone.FD,conch.zone.PT,conch.zone.SD)
 ggsave("Conch_Fishing_Effort_by_Gear_Type.png", plot = plot_grid_conch_gear, device = "png", path="Final_Figures_Tables/",scale = 1.25, width=12, height=8, units="in")
-##################### visualization of sub-species means over the years ##################################
-#sample subset for a sample species 
-redhind.subset <- fish.species.year %>%
-  group_by(Year)%>%
-  filter(Species_latin_name %in% c("Epinephelus guttatus"))%>%
-  filter(!is.na(pct.wt))
-head(redhind.subset)
-
-#boxplot of means using ggplotfor redhind fish
-Year.f<-factor(redhind.subset$Year,levels=c(2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019),) 
-redhind.fish.wt.means<-ggplot(redhind.subset, aes(Year.f, avg.fish.wt))
-redhind.fish.wt.means + geom_boxplot(aes(fill = Year.f))+
-  theme(axis.text.x = element_text(size=30),
-        axis.text.y = element_text(size=20),
-        axis.title.x = element_blank(),
-        axis.title.y = element_text(size=25, face="bold"),
-        plot.title = element_text(size=30, face="bold"))+
-  theme(legend.position="none")+
-  labs(x="Year", y="Average Fish Weight (lbs)",fill = "Year")+
-  ggtitle("Box Plot of Average Fish Weight from 2012-2019 ")
-
-# boxplot of means for redhind fish using a normal boxplot function
-boxplot(avg.fish.wt~Year,data=redhind.subset, main="Comparison of Redhind Fish Average Weight (lbs) for 2012-2019",
-        col=c("red", "orange","blue","darkblue","green", "darkgreen", "purple", "deeppink"),
-        xlab="Years",
-        ylab="Average Fish Weight (lbs)",
-        cex=1.5, cex.axis=1.25, cex.lab =1.5,cex.main=2)
-
-#sample means calulation for the redhind species
-redhind.mean.year <-redhind.subset%>%
-  group_by(Year)%>%
-  summarise(mean.avg.fish.wt=mean(avg.fish.wt), 
-            mean.pct.spec=mean(pct.spec),
-            mean.pct.wt=mean(pct.wt))
-head(redhind.mean.year)
-
 ################### seasonal plots for fish, lobsters, and conch, no zones########################
 #looking at fish monthly season totals
 fish.months.season <- zones.fish %>% 
-  group_by(Month)%>% 
+  group_by(Year,Month)%>%
+   filter(Year<2019)%>%
+   group_by(Month)%>%
   summarize(weight.total=sum(weight.per.zone,na.rm = T),
             Num.Trips=n_distinct(Trip_ID, na.rm=T), 
             avg.wt.per.trip = mean((weight.total/Num.Trips), na.rm=T),
@@ -1286,15 +1327,18 @@ fishing_seasons_sum+geom_point(color="blue",size=6)+ylim(0,2500)+
         plot.title = element_text(size=30, face="bold"))+
   scale_x_continuous(breaks = seq(0, 12, by = 1))+
   labs(x="Month", y="Total Weight (kg)")+
-  ggtitle("Seasonality of Total Weight of Fish Caught From 2012-2019")
-ggsave("Fish_Seasonality_Sum_2012-2019.png", path="Final_Figures_Tables/",width=14, height=9, units=c("in"))
+  ggtitle("Seasonality of Total Weight of Fish Caught From 2012-2018")
+ggsave("Fish_Seasonality_Sum_2012-2018.png", path="Final_Figures_Tables/",width=14, height=9, units=c("in"))
 
 fishing_seasons_avg<-ggplot(fish.months.season, mapping = aes(x=Month, y=avg.wt.per.trip))
 fishing_seasons_avg+
-  geom_errorbar(aes(ymin=ci.lower, ymax=ci.upper), width=1 )+
-  geom_point(color="blue", size=6)+
+   geom_errorbar(aes(ymin=avg.wt.per.trip-se.avg.wt, ymax=avg.wt.per.trip+se.avg.wt), 
+                 width=0.0, size=2, color="black") +
+   geom_errorbar(aes(ymin=avg.wt.per.trip-1.96*se.avg.wt, ymax=avg.wt.per.trip+1.96*se.avg.wt), 
+                 width=0.0, size=0.5, color="black")+
+   geom_point(color="blue", size=2)+
   geom_hline(yintercept = 0) +
-  ylim(0,70)+
+  ylim(0,50)+
   theme(axis.text.x = element_text(size=20),
         axis.text.y = element_text(size=20),
         axis.title.x = element_text(size=25, face="bold"),
@@ -1302,8 +1346,8 @@ fishing_seasons_avg+
         plot.title = element_text(size=30, face="bold"))+
   scale_x_continuous(breaks = seq(0, 12, by = 1))+
   labs(x="Month", y="Average Weight per Trip (kg)")+
-  ggtitle("Seasonality of Average Catch of Fish per Trip From 2012-2019")
-ggsave("Fish_Seasonality_Avg_2012-2019.png", path="Final_Figures_Tables/",width=14, height=9, units=c("in"))
+  ggtitle("Seasonality of Average Catch of Fish per Trip From 2012-2018")
+ggsave("Fish_Seasonality_Avg_2012-2018.png", path="Final_Figures_Tables/",width=14, height=9, units=c("in"))
 
 #looking at the total amount of fish caught each year and looking for total changes
 fish.years <- zones.fish %>% 
@@ -1314,7 +1358,8 @@ fish.years <- zones.fish %>%
             sd.avg.wt=sd(c(avg.wt.per.trip, na.rm=T)),
             se.avg.wt = (sd.avg.wt)/(sqrt(Num.Trips)))%>%
   mutate(ci.upper=avg.wt.per.trip+sd.avg.wt,
-         ci.lower=avg.wt.per.trip-sd.avg.wt)
+         ci.lower=avg.wt.per.trip-sd.avg.wt)%>%
+   filter(Year<2019)
 head(fish.years)
 plot(fish.years$weight.total~fish.years$Year, 
      col=fish.years$Year)
@@ -1327,31 +1372,63 @@ fishing_years_sum+geom_point(color="blue",size=6)+ylim(0,4000)+
         axis.title.x = element_text(size=25, face="bold"),
         axis.title.y = element_text(size=25, face="bold"),
         plot.title = element_text(size=30, face="bold"))+
-  scale_x_continuous(breaks = seq(2012,2019 , by = 1))+
+  scale_x_continuous(breaks = seq(2012,2018 , by = 1))+
   labs(x="Year", y="Total Weight (kg)")+
-  ggtitle("Total Weight of Fish Caught per Year From 2012-2019")
-ggsave("Fish_Year_Totals_2012-2019.png", path="Final_Figures_Tables/", width=14, height=9, units=c("in"))
+  ggtitle("Total Weight of Fish Caught per Year From 2012-2018")
+ggsave("Fish_Year_Totals_2012-2018.png", path="Final_Figures_Tables/", width=14, height=9, units=c("in"))
 
 #using ggplot to create better looking plots of yearly summaries 
 fishing_years_avg<-ggplot(fish.years, mapping = aes(x=Year, y=avg.wt.per.trip))
 fishing_years_avg+
-  geom_errorbar(aes(ymin=ci.lower, ymax=ci.upper), width=1 )+
-  geom_point(color="blue", size=6)+
+   geom_errorbar(aes(ymin=avg.wt.per.trip-se.avg.wt, ymax=avg.wt.per.trip+se.avg.wt), 
+                 width=0.0, size=2, color="black") +
+   geom_errorbar(aes(ymin=avg.wt.per.trip-1.96*se.avg.wt, ymax=avg.wt.per.trip+1.96*se.avg.wt), 
+                 width=0.0, size=0.5, color="black")+
+   geom_point(color="blue", size=2)+
   geom_hline(yintercept = 0) +
-  ylim(0,60)+
+  ylim(0,35)+
   theme(axis.text.x = element_text(size=20),
         axis.text.y = element_text(size=20),
         axis.title.x = element_text(size=25, face="bold"),
         axis.title.y = element_text(size=25, face="bold"),
         plot.title = element_text(size=30, face="bold"))+
-  scale_x_continuous(breaks = seq(2012,2019 , by = 1))+
+  scale_x_continuous(breaks = seq(2012,2018 , by = 1))+
   labs(x="Year", y="Average Weight per Trip (kg)")+
-  ggtitle("Average Fish Catch per Trip per Year From 2012-2019")
-ggsave("Fish_Year_Avg_2012-2019.png", path="Final_Figures_Tables/", width=14, height=9, units=c("in"))
+  ggtitle("Average Fish Catch per Trip per Year From 2012-2018")
+ggsave("Fish_Year_Avg_2012-2018.png", path="Final_Figures_Tables/", width=14, height=9, units=c("in"))
+
+#looking at the total amount of fish caught each year per gear and looking for total changes
+fish.years.gears <- zones.fish %>% 
+   group_by(Year, Gear)%>% 
+   summarize(weight.total=sum(weight.per.zone,na.rm = T),
+             Num.Trips=n_distinct(Trip_ID, na.rm=T), 
+             avg.wt.per.trip = mean((weight.total/Num.Trips), na.rm=T),
+             sd.avg.wt=sd(c(avg.wt.per.trip, na.rm=T)),
+             se.avg.wt = (sd.avg.wt)/(sqrt(Num.Trips)))%>%
+   mutate(ci.upper=avg.wt.per.trip+sd.avg.wt,
+          ci.lower=avg.wt.per.trip-sd.avg.wt)%>%
+   filter(Year<2019)
+head(fish.years.gears)
+plot(fish.years.gears$weight.total~fish.years.gears$Year, 
+     col=fish.years.gears$Year)
+#using ggplot to create better looking plots of yearly summaries 
+fishing_years_gears_sum<-ggplot(fish.years.gears, mapping = aes(x=Year, y=weight.total))
+fishing_years_gears_sum+geom_point(aes(color=factor(Gear)),size=6)+ylim(0,2000)+
+   theme(axis.text.x = element_text(size=20),
+         axis.text.y = element_text(size=20),
+         axis.title.x = element_text(size=25, face="bold"),
+         axis.title.y = element_text(size=25, face="bold"),
+         plot.title = element_text(size=30, face="bold"))+
+   scale_x_continuous(breaks = seq(2012,2018 , by = 1))+
+   labs(x="Year", y="Total Weight (kg)")+
+   ggtitle("Total Weight of Fish Caught per Gear per Year From 2012-2018")
+ggsave("Fish_Year_Gear_Totals_2012-2018.png", path="Final_Figures_Tables/", width=14, height=9, units=c("in"))
 
 #looking at lobsters monthly to see if there is seasonality
 lob.months.season <- zones.lob %>% 
-  group_by(Month)%>% 
+   group_by(Year,Month)%>%
+   filter(Year<2019)%>%
+   group_by(Month)%>%
   summarize(ind.total=sum(ind.per.zone, na.rm=T),
             Num.Trips=n_distinct(Trip_ID),
             avg.ind.per.trip = mean((ind.total/Num.Trips), na.rm=T),
@@ -1364,25 +1441,27 @@ plot(lob.months.season$ind.total~lob.months.season$Month)
 
 #using ggplot to create maps of lobster seasonality from 2012-2019
 lobster_season_sum<-ggplot(lob.months.season, mapping = aes(x=Month, y=ind.total))
-lobster_season_sum+geom_point(color="blue",size=6)+
+lobster_season_sum+geom_point(color="blue",size=6)+ylim(0,5000)+
   theme(axis.text.x = element_text(size=20),
         axis.text.y = element_text(size=20),
         axis.title.x = element_text(size=25, face="bold"),
         axis.title.y = element_text(size=25, face="bold"),
         plot.title = element_text(size=30, face="bold"))+
   scale_x_continuous(breaks = seq(0,12, by = 1))+
-  scale_y_continuous(breaks = seq(0,5500, by = 1000))+
   labs(x="Month", y="Total Number of Individuals")+
-  ggtitle("Seasonality of Total Number of Lobsters Caught From 2012-2019")
-ggsave("Lobster_Seasonality_Sum_2012-2019.png", path="Final_Figures_Tables/", width=14, height=9, units=c("in"))
+  ggtitle("Seasonality of Total Number of Lobsters Caught From 2012-2018")
+ggsave("Lobster_Seasonality_Sum_2012-2018.png", path="Final_Figures_Tables/", width=14, height=9, units=c("in"))
 
 #average lobster catch per month for all of the years summed from 2012-2019
 lobster_season_avg<-ggplot(lob.months.season, mapping = aes(x=Month, y=avg.ind.per.trip))
 lobster_season_avg+
-  geom_errorbar(aes(ymin=ci.lower, ymax=ci.upper), width=1 )+
-  geom_point(color="blue", size=6)+
+   geom_errorbar(aes(ymin=avg.ind.per.trip-se.avg.ind, ymax=avg.ind.per.trip+se.avg.ind), 
+                 width=0.0, size=2, color="black") +
+   geom_errorbar(aes(ymin=avg.ind.per.trip-1.96*se.avg.ind, ymax=avg.ind.per.trip+1.96*se.avg.ind), 
+                 width=0.0, size=0.5, color="black")+
+   geom_point(color="blue", size=2)+
   geom_hline(yintercept = 0) +
-  ylim(0,90)+
+  ylim(0,50)+
   theme(axis.text.x = element_text(size=20),
         axis.text.y = element_text(size=20),
         axis.title.x = element_text(size=25, face="bold"),
@@ -1390,8 +1469,8 @@ lobster_season_avg+
         plot.title = element_text(size=30, face="bold"))+
   scale_x_continuous(breaks = seq(0, 12, by = 1))+
   labs(x="Month", y="Average Number of Individuals Per Trip")+
-  ggtitle("Seasonality of Average Catch of Lobsters per Trip From 2012-2019")
-ggsave("Lobster_Seasonality_Avg_2012-2019.png", path="Final_Figures_Tables/", width=14, height=9, units=c("in"))
+  ggtitle("Seasonality of Average Catch of Lobsters per Trip From 2012-2018")
+ggsave("Lobster_Seasonality_Avg_2012-2018.png", path="Final_Figures_Tables/", width=14, height=9, units=c("in"))
 
 #looking at lobsters yearly totals to track any yield changes 
 lob.years <- zones.lob %>% 
@@ -1402,44 +1481,49 @@ lob.years <- zones.lob %>%
             sd.avg.ind=sd(c(avg.ind.per.trip, na.rm=T)),
             se.avg.ind = (sd.avg.ind)/(sqrt(Num.Trips)))%>%
   mutate(ci.upper=avg.ind.per.trip+sd.avg.ind,
-         ci.lower=avg.ind.per.trip-sd.avg.ind)
+         ci.lower=avg.ind.per.trip-sd.avg.ind)%>%
+   filter(Year<2019)
 head(lob.years)
 plot(lob.years$ind.total~lob.years$Year)
 
 #using ggplot to create plots of lobster yield from 2012-2019
 lobster_years_sum<-ggplot(lob.years, mapping = aes(x=Year, y=ind.total))
-lobster_years_sum+geom_point(color="blue",size=6)+
+lobster_years_sum+geom_point(color="blue",size=6)+ylim(0,8000)+
   theme(axis.text.x = element_text(size=20),
         axis.text.y = element_text(size=20),
         axis.title.x = element_text(size=25, face="bold"),
         axis.title.y = element_text(size=25, face="bold"),
         plot.title = element_text(size=30, face="bold"))+
-  scale_x_continuous(breaks = seq(2012,2019, by = 1))+
-  scale_y_continuous(breaks = seq(0,7000, by = 1000))+
+  scale_x_continuous(breaks = seq(2012,2018, by = 1))+
   labs(x="Year", y="Total Number of Individuals")+
-  ggtitle("Total Number of Lobsters Caught per Year From 2012-2019")
-ggsave("Lobster_Yield_2012-2019.png", path="Final_Figures_Tables/", width=14, height=9, units=c("in"))
+  ggtitle("Total Number of Lobsters Caught per Year From 2012-2018")
+ggsave("Lobster_Yield_2012-2018.png", path="Final_Figures_Tables/", width=14, height=9, units=c("in"))
 
 #using ggplot to create plots of average catch per trip for each year
 lobster_year_avg<-ggplot(lob.years, mapping = aes(x=Year, y=avg.ind.per.trip))
 lobster_year_avg+
-  geom_errorbar(aes(ymin=ci.lower, ymax=ci.upper), width=1 )+
-  geom_point(color="blue", size=6)+
+   geom_errorbar(aes(ymin=avg.ind.per.trip-se.avg.ind, ymax=avg.ind.per.trip+se.avg.ind), 
+                 width=0.0, size=2, color="black") +
+   geom_errorbar(aes(ymin=avg.ind.per.trip-1.96*se.avg.ind, ymax=avg.ind.per.trip+1.96*se.avg.ind), 
+                 width=0.0, size=0.5, color="black")+
+   geom_point(color="blue", size=2)+
   geom_hline(yintercept = 0) +
-  ylim(0,90)+
+  ylim(0,50)+
   theme(axis.text.x = element_text(size=20),
         axis.text.y = element_text(size=20),
         axis.title.x = element_text(size=25, face="bold"),
         axis.title.y = element_text(size=25, face="bold"),
         plot.title = element_text(size=30, face="bold"))+
-  scale_x_continuous(breaks = seq(2012,2019, by = 1))+
+  scale_x_continuous(breaks = seq(2012,2018, by = 1))+
   labs(x="Year", y="Average Number of Individuals Per Trip")+
-  ggtitle("Average Lobster Catch per Trip per Year From 2012-2019")
-ggsave("Lobster_Yearly_Avg_2012-2019.png", path="Final_Figures_Tables/",width=14, height=9, units=c("in"))
+  ggtitle("Average Lobster Catch per Trip per Year From 2012-2018")
+ggsave("Lobster_Yearly_Avg_2012-2018.png", path="Final_Figures_Tables/",width=14, height=9, units=c("in"))
 
 #looking at conch
 conch.months.season <- zones.conch %>% 
-  group_by(Month)%>% 
+   group_by(Year,Month)%>%
+   filter(Year<2019)%>%
+   group_by(Month)%>%
   summarize(ind.total=sum(ind.per.zone, na.rm=T),
             Num.Trips=n_distinct(Trip_ID, na.rm=T),
             avg.ind.per.trip = mean((ind.total/Num.Trips), na.rm=T),
@@ -1460,16 +1544,19 @@ conch_season_sum+geom_point(color="blue",size=6)+ylim(0,2500)+
         plot.title = element_text(size=30, face="bold"))+
   scale_x_continuous(breaks = seq(0,12, by = 1))+
   labs(x="Month", y="Total Number of Individuals")+
-  ggtitle("Seasonality of Total Number of Conch Caught From 2012-2019")
-ggsave("Conch_Seasonality_Sum_2012-2019.png", path="Final_Figures_Tables/", width=14, height=9, units=c("in"))
+  ggtitle("Seasonality of Total Number of Conch Caught From 2012-2018")
+ggsave("Conch_Seasonality_Sum_2012-2018.png", path="Final_Figures_Tables/", width=14, height=9, units=c("in"))
 
 #average conch catch per month for all of the years summed from 2012-2019
 conch_season_avg<-ggplot(conch.months.season, mapping = aes(x=Month, y=avg.ind.per.trip))
 conch_season_avg+
-  geom_errorbar(aes(ymin=ci.lower, ymax=ci.upper), width=1 )+
-  geom_point(color="blue", size=6)+
+   geom_errorbar(aes(ymin=avg.ind.per.trip-se.avg.ind, ymax=avg.ind.per.trip+se.avg.ind), 
+                 width=0.0, size=2, color="black") +
+   geom_errorbar(aes(ymin=avg.ind.per.trip-1.96*se.avg.ind, ymax=avg.ind.per.trip+1.96*se.avg.ind), 
+                 width=0.0, size=0.5, color="black")+
+   geom_point(color="blue", size=2)+
   geom_hline(yintercept = 0) +
-  ylim(0,250)+
+  ylim(0,200)+
   theme(axis.text.x = element_text(size=20),
         axis.text.y = element_text(size=20),
         axis.title.x = element_text(size=25, face="bold"),
@@ -1477,8 +1564,8 @@ conch_season_avg+
         plot.title = element_text(size=30, face="bold"))+
   scale_x_continuous(breaks = seq(0, 12, by = 1))+
   labs(x="Month", y="Average Number of Individuals Per Trip")+
-  ggtitle("Seasonality of Average Catch of Conch per Trip From 2012-2019")
-ggsave("Conch_Seasonality_Avg_2012-2019.png", path="Final_Figures_Tables/", width=14, height=9, units=c("in"))
+  ggtitle("Seasonality of Average Catch of Conch per Trip From 2012-2018")
+ggsave("Conch_Seasonality_Avg_2012-2018.png", path="Final_Figures_Tables/", width=14, height=9, units=c("in"))
 
 #looking at conch
 conch.years <- zones.conch %>% 
@@ -1489,7 +1576,8 @@ conch.years <- zones.conch %>%
             sd.avg.ind=sd(c(avg.ind.per.trip, na.rm=T)),
             se.avg.ind = (sd.avg.ind)/(sqrt(Num.Trips)))%>%
   mutate(ci.upper=avg.ind.per.trip+sd.avg.ind,
-         ci.lower=avg.ind.per.trip-sd.avg.ind)
+         ci.lower=avg.ind.per.trip-sd.avg.ind)%>%
+   filter(Year<2019)
 head(conch.years)
 plot(conch.years$ind.total~conch.years$Year)
 
@@ -1501,27 +1589,30 @@ conch_years_sum+geom_point(color="blue",size=6)+ylim(0,2500)+
         axis.title.x = element_text(size=25, face="bold"),
         axis.title.y = element_text(size=25, face="bold"),
         plot.title = element_text(size=30, face="bold"))+
-  scale_x_continuous(breaks = seq(2012,2019, by = 1))+
+  scale_x_continuous(breaks = seq(2012,2018, by = 1))+
   labs(x="Year", y="Total Number of Individuals")+
-  ggtitle("Total Number of Conch Caught per Year From 2012-2019")
-ggsave("Conch_Year_Totals_2012-2019.png", path="Final_Figures_Tables/", width=14, height=9, units=c("in"))
+  ggtitle("Total Number of Conch Caught per Year From 2012-2018")
+ggsave("Conch_Year_Totals_2012-2018.png", path="Final_Figures_Tables/", width=14, height=9, units=c("in"))
 
 #using ggplot to create plots of average catch per trip for each year
 conch_year_avg<-ggplot(lob.years, mapping = aes(x=Year, y=avg.ind.per.trip))
 conch_year_avg+
-  geom_errorbar(aes(ymin=ci.lower, ymax=ci.upper), width=1 )+
-  geom_point(color="blue", size=6)+
+   geom_errorbar(aes(ymin=avg.ind.per.trip-se.avg.ind, ymax=avg.ind.per.trip+se.avg.ind), 
+                 width=0.0, size=2, color="black") +
+   geom_errorbar(aes(ymin=avg.ind.per.trip-1.96*se.avg.ind, ymax=avg.ind.per.trip+1.96*se.avg.ind), 
+                 width=0.0, size=0.5, color="black")+
+   geom_point(color="blue", size=2)+
   geom_hline(yintercept = 0) +
-  ylim(0,100)+
+  ylim(0,50)+
   theme(axis.text.x = element_text(size=20),
         axis.text.y = element_text(size=20),
         axis.title.x = element_text(size=25, face="bold"),
         axis.title.y = element_text(size=25, face="bold"),
         plot.title = element_text(size=30, face="bold"))+
-  scale_x_continuous(breaks = seq(2012,2019, by = 1))+
+  scale_x_continuous(breaks = seq(2012,2018, by = 1))+
   labs(x="Year", y="Average Number of Individuals Per Trip")+
-  ggtitle("Average Conch Catch per Trip per Year From 2012-2019")
-ggsave("Conch_Yearly_Avg_2012-2019.png", path="Final_Figures_Tables/",width=14, height=9, units=c("in"))
+  ggtitle("Average Conch Catch per Trip per Year From 2012-2018")
+ggsave("Conch_Yearly_Avg_2012-2018.png", path="Final_Figures_Tables/",width=14, height=9, units=c("in"))
 
 ###################### plots looking at amount of fish caught in the marine park #####################
 
@@ -1649,7 +1740,7 @@ fish.inpark.2019 <- ggplot() +
   labs(title = paste0("Map of Fishing Effort in the Marine Park for 2019"), x="Total Landings per sqkm", y=NULL) +
   theme_bw()
 fish.inpark<-plot_grid(fish.inpark.2012,fish.inpark.2013,fish.inpark.2014, fish.inpark.2015, 
-          fish.inpark.2016, fish.inpark.2017, fish.inpark.2018, fish.inpark.2019)
+          fish.inpark.2016, fish.inpark.2017, fish.inpark.2018)
 plot(fish.inpark.2012)
 plot(fish.inpark.2013)
 plot(fish.inpark.2014)
@@ -1660,7 +1751,7 @@ plot(fish.inpark.2018)
 plot(fish.inpark.2019)
 
 # saving files
-ggsave("Fishing_Effort_Inpark_2012-2019.png", plot = fish.inpark, device = "png", path="Final_Figures_Tables/",scale = 1.25, width=12, height=8, units="in")
+ggsave("Fishing_Effort_Inpark_2012-2018.png", plot = fish.inpark, device = "png", path="Final_Figures_Tables/",scale = 1.25, width=12, height=8, units="in")
 ggsave("Fishing_Effort_Inpark_2012.png", plot = fish.inpark.2012, device = "png", path="Final_Figures_Tables/")
 ggsave("Fishing_Effort_Inpark_2013.png", plot = fish.inpark.2013, device = "png", path="Final_Figures_Tables/")
 ggsave("Fishing_Effort_Inpark_2014.png", plot = fish.inpark.2014, device = "png", path="Final_Figures_Tables/")
