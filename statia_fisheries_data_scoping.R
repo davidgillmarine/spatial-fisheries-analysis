@@ -956,7 +956,7 @@ barplot(parrotfish.counts, main="Number of Parrotfish Caught per Year",
 parrotfish<-ggplot(parrotfish.weight.year,aes(Year))
 parrotfish+geom_bar(aes(weight=num.samples))
 
-#sample subset for redhind
+#sample subset for redhind by year
 redhind.subset <- fish.species %>%
    group_by(Species_latin_name,Year) %>% 
    summarise(ind.fish.weight=sum(ind.fish.weight,na.rm = T),
@@ -1003,6 +1003,55 @@ redhind_years_avg+
    labs(x="Year", y="Average Weight per Trip (kg)")+
    ggtitle("Sample Average Redhind Catch per Trip per Year From 2012-2018")
 ggsave("Redhind_Year_Avg_2012-2018.png", path="Final_Figures_Tables/", width=14, height=9, units=c("in"))
+
+#sample subset for redhind by month
+redhind.subset.month <- fish.species %>%
+   group_by(Year,Month)%>%
+   filter(Year<2019)%>%
+   group_by(Species_latin_name,Month) %>% 
+   summarise(ind.fish.weight=sum(ind.fish.weight,na.rm = T),
+             num.samples=n_distinct(Sample_ID),
+             mean.fish.weight=mean(ind.fish.weight/num.samples,na.rm = T),
+             sd.avg.wt=sd(c(mean.fish.weight, na.rm=T)),
+             se.avg.wt = (sd.avg.wt)/(sqrt(num.samples)))%>%
+   mutate(ci.upper=mean.fish.weight+sd.avg.wt,
+          ci.lower=mean.fish.weight-sd.avg.wt,
+          se.lower=mean.fish.weight+se.avg.wt,
+          se.upeer=mean.fish.weight-se.avg.wt)%>% 
+   filter(!is.na(Species_latin_name),
+          Species_latin_name %in% c("Epinephelus guttatus", na.rm=T))
+head(redhind.subset.month)
+
+redhind_month_sum<-ggplot(redhind.subset.month, mapping = aes(x=Month, y=ind.fish.weight))
+redhind_month_sum+geom_point(color="blue",size=6)+ylim(0,150)+
+   theme(axis.text.x = element_text(size=20),
+         axis.text.y = element_text(size=20),
+         axis.title.x = element_text(size=25, face="bold"),
+         axis.title.y = element_text(size=25, face="bold"),
+         plot.title = element_text(size=30, face="bold"))+
+   scale_x_continuous(breaks = seq(1,12 , by = 1))+
+   labs(x="Month", y="Total Weight (kg)")+
+   ggtitle("Sample Weight of Redhind Caught Seasonally From 2012-2018")
+ggsave("Redhind_Month_Totals_2012-2018.png", path="Final_Figures_Tables/", width=14, height=9, units=c("in"))
+
+redhind_month_avg<-ggplot(redhind.subset.month, mapping = aes(x=Month, y=mean.fish.weight))
+redhind_month_avg+
+   geom_errorbar(aes(ymin=mean.fish.weight-se.avg.wt, ymax=mean.fish.weight+se.avg.wt), 
+                 width=0.0, size=2, color="black") +
+   geom_errorbar(aes(ymin=mean.fish.weight-1.96*se.avg.wt, ymax=mean.fish.weight+1.96*se.avg.wt), 
+                 width=0.0, size=0.5, color="black")+
+   geom_point(color="blue", size=2)+
+   geom_hline(yintercept = 0) +
+   ylim(0,5)+
+   theme(axis.text.x = element_text(size=20),
+         axis.text.y = element_text(size=20),
+         axis.title.x = element_text(size=25, face="bold"),
+         axis.title.y = element_text(size=25, face="bold"),
+         plot.title = element_text(size=30, face="bold"))+
+   scale_x_continuous(breaks = seq(1,12 , by = 1))+
+   labs(x="Year", y="Average Weight per Trip (kg)")+
+   ggtitle("Sample Average Redhind Catch per Trip per Month From 2012-2018")
+ggsave("Redhind_Month_Avg_2012-2018.png", path="Final_Figures_Tables/", width=14, height=9, units=c("in"))
 
 #sample subset for parrotfish
 parrotfish.subset <- fish.species %>%
@@ -1189,6 +1238,419 @@ plot(fish.zone.NET)
 plot_grid_fish_gear<-plot_grid(fish.zone.HL,fish.zone.LL,fish.zone.FD, fish.zone.PT, fish.zone.TR, fish.zone.SD, fish.zone.DL, fish.zone.NET)
 
 ggsave("Fishing_Effort_by_Gear_Type.png", plot = plot_grid_fish_gear, device = "png", path="Final_Figures_Tables/",scale = 1.25, width=12, height=8, units="in")
+
+#looking at individual gears by year through 2018 
+fishing.zones.gear.year <-zone.fish.gear.year%>%
+   mutate (zone_id = as.numeric(zone_id))
+
+zone.ind2.gear.year<-zone.ind.gear%>%
+   mutate (zone_id = as.numeric(zone_id))%>%
+   left_join(fishing.zones.gear.year, by = "zone_id")%>%
+   mutate(area_km2 = area_m2/1000000)%>%
+   mutate (fishing_pressure=weight.total/area_km2)%>%
+   select(Name,zone_id,Year,Gear,area_m2,area_km2,weight.total,fishing_pressure, geometry)%>%
+   rename(weight_kg=weight.total)
+head(zone.ind2.gear.year)
+#looking at pot trap numbers by zone through 2018
+zone.ind2.gear.pottrap<-zone.ind2.gear.year%>%
+   filter(Gear=="PT")
+head(zone.ind2.gear.pottrap)
+
+#calculating the range for use in standardizing the scales of all the plots
+zone.ind2.range.pottrap <- range(zone.ind2.gear.pottrap$fishing_pressure, na.rm = TRUE) 
+zone.ind2.range.pottrap #check to make sure it worked 
+
+fish.zone.pottrap.2012 <- ggplot() +
+   geom_sf(data=zone.ind.gear)+
+   geom_sf(data=filter(zone.ind2.gear.pottrap,Year==2012), aes( fill = fishing_pressure)) +
+   geom_sf_label(data=filter(zone.ind2.gear.year,Year==2012), aes(label = zone_id),
+                 label.padding = unit(0.25, "lines"),
+                 label.r = unit(0, "lines"), label.size = 0.4)+
+   scale_fill_gradient2(low="#f7fbff",high="#2171b5",name="Fishing Pressure",  #use this to format the scale, set the limits using the range you calculated
+                        na.value="gray90",limits=c(0,max(zone.ind2.range.pottrap[2]))) +
+   labs(title = paste0("Map of Fishing Effort by Pot Trap for 2012"), x="Total Landings per sqkm", y=NULL) +  #create the correct labels for the plot
+   theme_bw()
+plot(fish.zone.pottrap.2012)
+
+fish.zone.pottrap.2013 <- ggplot() +
+   geom_sf(data=zone.ind.gear)+
+   geom_sf(data=filter(zone.ind2.gear.pottrap,Year==2013), aes( fill = fishing_pressure)) +
+   geom_sf_label(data=filter(zone.ind2.gear.year,Year==2013), aes(label = zone_id),
+                 label.padding = unit(0.25, "lines"),
+                 label.r = unit(0, "lines"), label.size = 0.4)+
+   scale_fill_gradient2(low="#f7fbff",high="#2171b5",name="Fishing Pressure",  #use this to format the scale, set the limits using the range you calculated
+                        na.value="gray90",limits=c(0,max(zone.ind2.range.pottrap[2]))) +
+   labs(title = paste0("Map of Fishing Effort by Pot Trap for 2013"), x="Total Landings per sqkm", y=NULL) +  #create the correct labels for the plot
+   theme_bw()
+plot(fish.zone.pottrap.2013)
+
+fish.zone.pottrap.2014 <- ggplot() +
+   geom_sf(data=zone.ind.gear)+
+   geom_sf(data=filter(zone.ind2.gear.pottrap,Year==2014), aes( fill = fishing_pressure)) +
+   geom_sf_label(data=filter(zone.ind2.gear.year,Year==2014), aes(label = zone_id),
+                 label.padding = unit(0.25, "lines"),
+                 label.r = unit(0, "lines"), label.size = 0.4)+
+   scale_fill_gradient2(low="#f7fbff",high="#2171b5",name="Fishing Pressure",  #use this to format the scale, set the limits using the range you calculated
+                        na.value="gray90",limits=c(0,max(zone.ind2.range.pottrap[2]))) +
+   labs(title = paste0("Map of Fishing Effort by Pot Trap for 2014"), x="Total Landings per sqkm", y=NULL) +  #create the correct labels for the plot
+   theme_bw()
+plot(fish.zone.pottrap.2014)
+
+fish.zone.pottrap.2015 <- ggplot() +
+   geom_sf(data=zone.ind.gear)+
+   geom_sf(data=filter(zone.ind2.gear.pottrap,Year==2015), aes( fill = fishing_pressure)) +
+   geom_sf_label(data=filter(zone.ind2.gear.year,Year==2015), aes(label = zone_id),
+                 label.padding = unit(0.25, "lines"),
+                 label.r = unit(0, "lines"), label.size = 0.4)+
+   scale_fill_gradient2(low="#f7fbff",high="#2171b5",name="Fishing Pressure",  #use this to format the scale, set the limits using the range you calculated
+                        na.value="gray90",limits=c(0,max(zone.ind2.range.pottrap[2]))) +
+   labs(title = paste0("Map of Fishing Effort by Pot Trap for 2015"), x="Total Landings per sqkm", y=NULL) +  #create the correct labels for the plot
+   theme_bw()
+plot(fish.zone.pottrap.2015)
+
+fish.zone.pottrap.2016 <- ggplot() +
+   geom_sf(data=zone.ind.gear)+
+   geom_sf(data=filter(zone.ind2.gear.pottrap,Year==2016), aes( fill = fishing_pressure)) +
+   geom_sf_label(data=filter(zone.ind2.gear.year,Year==2016), aes(label = zone_id),
+                 label.padding = unit(0.25, "lines"),
+                 label.r = unit(0, "lines"), label.size = 0.4)+
+   scale_fill_gradient2(low="#f7fbff",high="#2171b5",name="Fishing Pressure",  #use this to format the scale, set the limits using the range you calculated
+                        na.value="gray90",limits=c(0,max(zone.ind2.range.pottrap[2]))) +
+   labs(title = paste0("Map of Fishing Effort by Pot Trap for 2016"), x="Total Landings per sqkm", y=NULL) +  #create the correct labels for the plot
+   theme_bw()
+plot(fish.zone.pottrap.2016)
+
+fish.zone.pottrap.2017 <- ggplot() +
+   geom_sf(data=zone.ind.gear)+
+   geom_sf(data=filter(zone.ind2.gear.pottrap,Year==2017), aes( fill = fishing_pressure)) +
+   geom_sf_label(data=filter(zone.ind2.gear.year,Year==2017), aes(label = zone_id),
+                 label.padding = unit(0.25, "lines"),
+                 label.r = unit(0, "lines"), label.size = 0.4)+
+   scale_fill_gradient2(low="#f7fbff",high="#2171b5",name="Fishing Pressure",  #use this to format the scale, set the limits using the range you calculated
+                        na.value="gray90",limits=c(0,max(zone.ind2.range.pottrap[2]))) +
+   labs(title = paste0("Map of Fishing Effort by Pot Trap for 2017"), x="Total Landings per sqkm", y=NULL) +  #create the correct labels for the plot
+   theme_bw()
+plot(fish.zone.pottrap.2017)
+
+fish.zone.pottrap.2018 <- ggplot() +
+   geom_sf(data=zone.ind.gear)+
+   geom_sf(data=filter(zone.ind2.gear.pottrap,Year==2018), aes( fill = fishing_pressure)) +
+   geom_sf_label(data=filter(zone.ind2.gear.year,Year==2018), aes(label = zone_id),
+                 label.padding = unit(0.25, "lines"),
+                 label.r = unit(0, "lines"), label.size = 0.4)+
+   scale_fill_gradient2(low="#f7fbff",high="#2171b5",name="Fishing Pressure",  #use this to format the scale, set the limits using the range you calculated
+                        na.value="gray90",limits=c(0,max(zone.ind2.range.pottrap[2]))) +
+   labs(title = paste0("Map of Fishing Effort by Pot Trap for 2018"), x="Total Landings per sqkm", y=NULL) +  #create the correct labels for the plot
+   theme_bw()
+plot(fish.zone.pottrap.2018)
+
+plot_grid_fish_pottrap<-plot_grid(fish.zone.pottrap.2012, fish.zone.pottrap.2013, fish.zone.pottrap.2014,
+                                  fish.zone.pottrap.2015, fish.zone.pottrap.2016, fish.zone.pottrap.2017,
+                                  fish.zone.pottrap.2018)
+
+ggsave("Fishing_Effort_by_Pottrap_2012_2018.png", plot = plot_grid_fish_pottrap, device = "png", path="Final_Figures_Tables/",
+       scale = 1.25, width=12, height=8, units="in")
+
+#looking at diving numbers by zone through 2018
+zone.ind2.gear.diving<-zone.ind2.gear.year%>%
+   filter(Gear=="FD" | Gear=="SD")
+head(zone.ind2.gear.diving)
+
+#calculating the range for use in standardizing the scales of all the plots
+zone.ind2.range.diving <- range(zone.ind2.gear.diving$fishing_pressure, na.rm = TRUE) 
+zone.ind2.range.diving #check to make sure it worked 
+
+fish.zone.diving.2012 <- ggplot() +
+   geom_sf(data=zone.ind.gear)+
+   geom_sf(data=filter(zone.ind2.gear.diving,Year==2012), aes( fill = fishing_pressure)) +
+   geom_sf_label(data=filter(zone.ind2.gear.year,Year==2012), aes(label = zone_id),
+                 label.padding = unit(0.25, "lines"),
+                 label.r = unit(0, "lines"), label.size = 0.4)+
+   scale_fill_gradient2(low="#f7fbff",high="#2171b5",name="Fishing Pressure",  #use this to format the scale, set the limits using the range you calculated
+                        na.value="gray90",limits=c(0,max(zone.ind2.range.diving[2]))) +
+   labs(title = paste0("Map of Fishing Effort by Diving for 2012"), x="Total Landings per sqkm", y=NULL) +  #create the correct labels for the plot
+   theme_bw()
+plot(fish.zone.diving.2012)
+
+fish.zone.diving.2013 <- ggplot() +
+   geom_sf(data=zone.ind.gear)+
+   geom_sf(data=filter(zone.ind2.gear.diving,Year==2013), aes( fill = fishing_pressure)) +
+   geom_sf_label(data=filter(zone.ind2.gear.year,Year==2013), aes(label = zone_id),
+                 label.padding = unit(0.25, "lines"),
+                 label.r = unit(0, "lines"), label.size = 0.4)+
+   scale_fill_gradient2(low="#f7fbff",high="#2171b5",name="Fishing Pressure",  #use this to format the scale, set the limits using the range you calculated
+                        na.value="gray90",limits=c(0,max(zone.ind2.range.diving[2]))) +
+   labs(title = paste0("Map of Fishing Effort by Diving for 2013"), x="Total Landings per sqkm", y=NULL) +  #create the correct labels for the plot
+   theme_bw()
+plot(fish.zone.diving.2013)
+
+fish.zone.diving.2014 <- ggplot() +
+   geom_sf(data=zone.ind.gear)+
+   geom_sf(data=filter(zone.ind2.gear.diving,Year==2014), aes( fill = fishing_pressure)) +
+   geom_sf_label(data=filter(zone.ind2.gear.year,Year==2014), aes(label = zone_id),
+                 label.padding = unit(0.25, "lines"),
+                 label.r = unit(0, "lines"), label.size = 0.4)+
+   scale_fill_gradient2(low="#f7fbff",high="#2171b5",name="Fishing Pressure",  #use this to format the scale, set the limits using the range you calculated
+                        na.value="gray90",limits=c(0,max(zone.ind2.range.diving[2]))) +
+   labs(title = paste0("Map of Fishing Effort by Diving for 2014"), x="Total Landings per sqkm", y=NULL) +  #create the correct labels for the plot
+   theme_bw()
+plot(fish.zone.diving.2014)
+
+fish.zone.diving.2015 <- ggplot() +
+   geom_sf(data=zone.ind.gear)+
+   geom_sf(data=filter(zone.ind2.gear.diving,Year==2015), aes( fill = fishing_pressure)) +
+   geom_sf_label(data=filter(zone.ind2.gear.year,Year==2015), aes(label = zone_id),
+                 label.padding = unit(0.25, "lines"),
+                 label.r = unit(0, "lines"), label.size = 0.4)+
+   scale_fill_gradient2(low="#f7fbff",high="#2171b5",name="Fishing Pressure",  #use this to format the scale, set the limits using the range you calculated
+                        na.value="gray90",limits=c(0,max(zone.ind2.range.diving[2]))) +
+   labs(title = paste0("Map of Fishing Effort by Diving for 2015"), x="Total Landings per sqkm", y=NULL) +  #create the correct labels for the plot
+   theme_bw()
+plot(fish.zone.diving.2015)
+
+fish.zone.diving.2016 <- ggplot() +
+   geom_sf(data=zone.ind.gear)+
+   geom_sf(data=filter(zone.ind2.gear.diving,Year==2016), aes( fill = fishing_pressure)) +
+   geom_sf_label(data=filter(zone.ind2.gear.year,Year==2016), aes(label = zone_id),
+                 label.padding = unit(0.25, "lines"),
+                 label.r = unit(0, "lines"), label.size = 0.4)+
+   scale_fill_gradient2(low="#f7fbff",high="#2171b5",name="Fishing Pressure",  #use this to format the scale, set the limits using the range you calculated
+                        na.value="gray90",limits=c(0,max(zone.ind2.range.diving[2]))) +
+   labs(title = paste0("Map of Fishing Effort by Diving for 2016"), x="Total Landings per sqkm", y=NULL) +  #create the correct labels for the plot
+   theme_bw()
+plot(fish.zone.diving.2016)
+
+fish.zone.diving.2017 <- ggplot() +
+   geom_sf(data=zone.ind.gear)+
+   geom_sf(data=filter(zone.ind2.gear.diving,Year==2017), aes( fill = fishing_pressure)) +
+   geom_sf_label(data=filter(zone.ind2.gear.year,Year==2017), aes(label = zone_id),
+                 label.padding = unit(0.25, "lines"),
+                 label.r = unit(0, "lines"), label.size = 0.4)+
+   scale_fill_gradient2(low="#f7fbff",high="#2171b5",name="Fishing Pressure",  #use this to format the scale, set the limits using the range you calculated
+                        na.value="gray90",limits=c(0,max(zone.ind2.range.diving[2]))) +
+   labs(title = paste0("Map of Fishing Effort by Diving for 2017"), x="Total Landings per sqkm", y=NULL) +  #create the correct labels for the plot
+   theme_bw()
+plot(fish.zone.diving.2017)
+
+fish.zone.diving.2018 <- ggplot() +
+   geom_sf(data=zone.ind.gear)+
+   geom_sf(data=filter(zone.ind2.gear.diving,Year==2018), aes( fill = fishing_pressure)) +
+   geom_sf_label(data=filter(zone.ind2.gear.year,Year==2018), aes(label = zone_id),
+                 label.padding = unit(0.25, "lines"),
+                 label.r = unit(0, "lines"), label.size = 0.4)+
+   scale_fill_gradient2(low="#f7fbff",high="#2171b5",name="Fishing Pressure",  #use this to format the scale, set the limits using the range you calculated
+                        na.value="gray90",limits=c(0,max(zone.ind2.range.diving[2]))) +
+   labs(title = paste0("Map of Fishing Effort by Diving for 2018"), x="Total Landings per sqkm", y=NULL) +  #create the correct labels for the plot
+   theme_bw()
+plot(fish.zone.diving.2018)
+
+plot_grid_fish_diving<-plot_grid(fish.zone.diving.2012, fish.zone.diving.2013, fish.zone.diving.2014,
+                                  fish.zone.diving.2015, fish.zone.diving.2016, fish.zone.diving.2017,
+                                  fish.zone.diving.2018)
+
+ggsave("Fishing_Effort_by_Diving_2012_2018.png", plot = plot_grid_fish_diving, device = "png", path="Final_Figures_Tables/",
+       scale = 1.25, width=12, height=8, units="in")
+
+#looking at trolling numbers by zone through 2018
+zone.ind2.gear.trolling<-zone.ind2.gear.year%>%
+   filter(Gear=="TR")
+head(zone.ind2.gear.trolling)
+
+#calculating the range for use in standardizing the scales of all the plots
+zone.ind2.range.trolling<- range(zone.ind2.gear.trolling$fishing_pressure, na.rm = TRUE) 
+zone.ind2.range.trolling #check to make sure it worked 
+
+fish.zone.trolling.2012 <- ggplot() +
+   geom_sf(data=zone.ind.gear)+
+   geom_sf(data=filter(zone.ind2.gear.trolling,Year==2012), aes( fill = fishing_pressure)) +
+   geom_sf_label(data=filter(zone.ind2.gear.year,Year==2012), aes(label = zone_id),
+                 label.padding = unit(0.25, "lines"),
+                 label.r = unit(0, "lines"), label.size = 0.4)+
+   scale_fill_gradient2(low="#f7fbff",high="#2171b5",name="Fishing Pressure",  #use this to format the scale, set the limits using the range you calculated
+                        na.value="gray90",limits=c(0,max(zone.ind2.range.trolling[2]))) +
+   labs(title = paste0("Map of Fishing Effort by Trolling for 2012"), x="Total Landings per sqkm", y=NULL) +  #create the correct labels for the plot
+   theme_bw()
+plot(fish.zone.trolling.2012)
+
+fish.zone.trolling.2013 <- ggplot() +
+   geom_sf(data=zone.ind.gear)+
+   geom_sf(data=filter(zone.ind2.gear.trolling,Year==2013), aes( fill = fishing_pressure)) +
+   geom_sf_label(data=filter(zone.ind2.gear.year,Year==2013), aes(label = zone_id),
+                 label.padding = unit(0.25, "lines"),
+                 label.r = unit(0, "lines"), label.size = 0.4)+
+   scale_fill_gradient2(low="#f7fbff",high="#2171b5",name="Fishing Pressure",  #use this to format the scale, set the limits using the range you calculated
+                        na.value="gray90",limits=c(0,max(zone.ind2.range.trolling[2]))) +
+   labs(title = paste0("Map of Fishing Effort by Trolling for 2013"), x="Total Landings per sqkm", y=NULL) +  #create the correct labels for the plot
+   theme_bw()
+plot(fish.zone.trolling.2013)
+
+fish.zone.trolling.2014 <- ggplot() +
+   geom_sf(data=zone.ind.gear)+
+   geom_sf(data=filter(zone.ind2.gear.trolling,Year==2014), aes( fill = fishing_pressure)) +
+   geom_sf_label(data=filter(zone.ind2.gear.year,Year==2014), aes(label = zone_id),
+                 label.padding = unit(0.25, "lines"),
+                 label.r = unit(0, "lines"), label.size = 0.4)+
+   scale_fill_gradient2(low="#f7fbff",high="#2171b5",name="Fishing Pressure",  #use this to format the scale, set the limits using the range you calculated
+                        na.value="gray90",limits=c(0,max(zone.ind2.range.trolling[2]))) +
+   labs(title = paste0("Map of Fishing Effort by Trolling for 2014"), x="Total Landings per sqkm", y=NULL) +  #create the correct labels for the plot
+   theme_bw()
+plot(fish.zone.trolling.2014)
+
+fish.zone.trolling.2015 <- ggplot() +
+   geom_sf(data=zone.ind.gear)+
+   geom_sf(data=filter(zone.ind2.gear.trolling,Year==2015), aes( fill = fishing_pressure)) +
+   geom_sf_label(data=filter(zone.ind2.gear.year,Year==2015), aes(label = zone_id),
+                 label.padding = unit(0.25, "lines"),
+                 label.r = unit(0, "lines"), label.size = 0.4)+
+   scale_fill_gradient2(low="#f7fbff",high="#2171b5",name="Fishing Pressure",  #use this to format the scale, set the limits using the range you calculated
+                        na.value="gray90",limits=c(0,max(zone.ind2.range.trolling[2]))) +
+   labs(title = paste0("Map of Fishing Effort by Trolling for 2015"), x="Total Landings per sqkm", y=NULL) +  #create the correct labels for the plot
+   theme_bw()
+plot(fish.zone.trolling.2015)
+
+fish.zone.trolling.2016 <- ggplot() +
+   geom_sf(data=zone.ind.gear)+
+   geom_sf(data=filter(zone.ind2.gear.trolling,Year==2016), aes( fill = fishing_pressure)) +
+   geom_sf_label(data=filter(zone.ind2.gear.year,Year==2016), aes(label = zone_id),
+                 label.padding = unit(0.25, "lines"),
+                 label.r = unit(0, "lines"), label.size = 0.4)+
+   scale_fill_gradient2(low="#f7fbff",high="#2171b5",name="Fishing Pressure",  #use this to format the scale, set the limits using the range you calculated
+                        na.value="gray90",limits=c(0,max(zone.ind2.range.trolling[2]))) +
+   labs(title = paste0("Map of Fishing Effort by Trolling for 2016"), x="Total Landings per sqkm", y=NULL) +  #create the correct labels for the plot
+   theme_bw()
+plot(fish.zone.trolling.2016)
+
+fish.zone.trolling.2017 <- ggplot() +
+   geom_sf(data=zone.ind.gear)+
+   geom_sf(data=filter(zone.ind2.gear.trolling,Year==2017), aes( fill = fishing_pressure)) +
+   geom_sf_label(data=filter(zone.ind2.gear.year,Year==2017), aes(label = zone_id),
+                 label.padding = unit(0.25, "lines"),
+                 label.r = unit(0, "lines"), label.size = 0.4)+
+   scale_fill_gradient2(low="#f7fbff",high="#2171b5",name="Fishing Pressure",  #use this to format the scale, set the limits using the range you calculated
+                        na.value="gray90",limits=c(0,max(zone.ind2.range.trolling[2]))) +
+   labs(title = paste0("Map of Fishing Effort by Trolling for 2017"), x="Total Landings per sqkm", y=NULL) +  #create the correct labels for the plot
+   theme_bw()
+plot(fish.zone.trolling.2017)
+
+fish.zone.trolling.2018 <- ggplot() +
+   geom_sf(data=zone.ind.gear)+
+   geom_sf(data=filter(zone.ind2.gear.trolling,Year==2018), aes( fill = fishing_pressure)) +
+   geom_sf_label(data=filter(zone.ind2.gear.year,Year==2018), aes(label = zone_id),
+                 label.padding = unit(0.25, "lines"),
+                 label.r = unit(0, "lines"), label.size = 0.4)+
+   scale_fill_gradient2(low="#f7fbff",high="#2171b5",name="Fishing Pressure",  #use this to format the scale, set the limits using the range you calculated
+                        na.value="gray90",limits=c(0,max(zone.ind2.range.trolling[2]))) +
+   labs(title = paste0("Map of Fishing Effort by Trolling for 2018"), x="Total Landings per sqkm", y=NULL) +  #create the correct labels for the plot
+   theme_bw()
+plot(fish.zone.trolling.2018)
+
+plot_grid_fish_trolling<-plot_grid(fish.zone.trolling.2012, fish.zone.trolling.2013, fish.zone.trolling.2014,
+                                 fish.zone.trolling.2015, fish.zone.trolling.2016, fish.zone.trolling.2017,
+                                 fish.zone.trolling.2018)
+
+ggsave("Fishing_Effort_by_Trolling_2012_2018.png", plot = plot_grid_fish_trolling, device = "png", path="Final_Figures_Tables/",
+       scale = 1.25, width=12, height=8, units="in")
+
+#looking at hand line numbers by zone through 2018
+zone.ind2.gear.handline<-zone.ind2.gear.year%>%
+   filter(Gear=="HL")
+head(zone.ind2.gear.handline)
+
+#calculating the range for use in standardizing the scales of all the plots
+zone.ind2.range.handline<- range(zone.ind2.gear.handline$fishing_pressure, na.rm = TRUE) 
+zone.ind2.range.handline #check to make sure it worked 
+
+fish.zone.handline.2012 <- ggplot() +
+   geom_sf(data=zone.ind.gear)+
+   geom_sf(data=filter(zone.ind2.gear.handline,Year==2012), aes( fill = fishing_pressure)) +
+   geom_sf_label(data=filter(zone.ind2.gear.year,Year==2012), aes(label = zone_id),
+                 label.padding = unit(0.25, "lines"),
+                 label.r = unit(0, "lines"), label.size = 0.4)+
+   scale_fill_gradient2(low="#f7fbff",high="#2171b5",name="Fishing Pressure",  #use this to format the scale, set the limits using the range you calculated
+                        na.value="gray90",limits=c(0,max(zone.ind2.range.handline[2]))) +
+   labs(title = paste0("Map of Fishing Effort by Handline for 2012"), x="Total Landings per sqkm", y=NULL) +  #create the correct labels for the plot
+   theme_bw()
+plot(fish.zone.handline.2012)
+
+fish.zone.handline.2013 <- ggplot() +
+   geom_sf(data=zone.ind.gear)+
+   geom_sf(data=filter(zone.ind2.gear.handline,Year==2013), aes( fill = fishing_pressure)) +
+   geom_sf_label(data=filter(zone.ind2.gear.year,Year==2013), aes(label = zone_id),
+                 label.padding = unit(0.25, "lines"),
+                 label.r = unit(0, "lines"), label.size = 0.4)+
+   scale_fill_gradient2(low="#f7fbff",high="#2171b5",name="Fishing Pressure",  #use this to format the scale, set the limits using the range you calculated
+                        na.value="gray90",limits=c(0,max(zone.ind2.range.handline[2]))) +
+   labs(title = paste0("Map of Fishing Effort by Handline for 2013"), x="Total Landings per sqkm", y=NULL) +  #create the correct labels for the plot
+   theme_bw()
+plot(fish.zone.handline.2013)
+
+fish.zone.handline.2014 <- ggplot() +
+   geom_sf(data=zone.ind.gear)+
+   geom_sf(data=filter(zone.ind2.gear.handline,Year==2014), aes( fill = fishing_pressure)) +
+   geom_sf_label(data=filter(zone.ind2.gear.year,Year==2014), aes(label = zone_id),
+                 label.padding = unit(0.25, "lines"),
+                 label.r = unit(0, "lines"), label.size = 0.4)+
+   scale_fill_gradient2(low="#f7fbff",high="#2171b5",name="Fishing Pressure",  #use this to format the scale, set the limits using the range you calculated
+                        na.value="gray90",limits=c(0,max(zone.ind2.range.handline[2]))) +
+   labs(title = paste0("Map of Fishing Effort by Handline for 2014"), x="Total Landings per sqkm", y=NULL) +  #create the correct labels for the plot
+   theme_bw()
+plot(fish.zone.handline.2014)
+
+fish.zone.handline.2015 <- ggplot() +
+   geom_sf(data=zone.ind.gear)+
+   geom_sf(data=filter(zone.ind2.gear.handline,Year==2015), aes( fill = fishing_pressure)) +
+   geom_sf_label(data=filter(zone.ind2.gear.year,Year==2015), aes(label = zone_id),
+                 label.padding = unit(0.25, "lines"),
+                 label.r = unit(0, "lines"), label.size = 0.4)+
+   scale_fill_gradient2(low="#f7fbff",high="#2171b5",name="Fishing Pressure",  #use this to format the scale, set the limits using the range you calculated
+                        na.value="gray90",limits=c(0,max(zone.ind2.range.handline[2]))) +
+   labs(title = paste0("Map of Fishing Effort by Handline for 2015"), x="Total Landings per sqkm", y=NULL) +  #create the correct labels for the plot
+   theme_bw()
+plot(fish.zone.handline.2015)
+
+fish.zone.handline.2016 <- ggplot() +
+   geom_sf(data=zone.ind.gear)+
+   geom_sf(data=filter(zone.ind2.gear.handline,Year==2016), aes( fill = fishing_pressure)) +
+   geom_sf_label(data=filter(zone.ind2.gear.year,Year==2016), aes(label = zone_id),
+                 label.padding = unit(0.25, "lines"),
+                 label.r = unit(0, "lines"), label.size = 0.4)+
+   scale_fill_gradient2(low="#f7fbff",high="#2171b5",name="Fishing Pressure",  #use this to format the scale, set the limits using the range you calculated
+                        na.value="gray90",limits=c(0,max(zone.ind2.range.handline[2]))) +
+   labs(title = paste0("Map of Fishing Effort by Handline for 2016"), x="Total Landings per sqkm", y=NULL) +  #create the correct labels for the plot
+   theme_bw()
+plot(fish.zone.handline.2016)
+
+fish.zone.handline.2017 <- ggplot() +
+   geom_sf(data=zone.ind.gear)+
+   geom_sf(data=filter(zone.ind2.gear.handline,Year==2017), aes( fill = fishing_pressure)) +
+   geom_sf_label(data=filter(zone.ind2.gear.year,Year==2017), aes(label = zone_id),
+                 label.padding = unit(0.25, "lines"),
+                 label.r = unit(0, "lines"), label.size = 0.4)+
+   scale_fill_gradient2(low="#f7fbff",high="#2171b5",name="Fishing Pressure",  #use this to format the scale, set the limits using the range you calculated
+                        na.value="gray90",limits=c(0,max(zone.ind2.range.handline[2]))) +
+   labs(title = paste0("Map of Fishing Effort by Handline for 2017"), x="Total Landings per sqkm", y=NULL) +  #create the correct labels for the plot
+   theme_bw()
+plot(fish.zone.handline.2017)
+
+fish.zone.handline.2018 <- ggplot() +
+   geom_sf(data=zone.ind.gear)+
+   geom_sf(data=filter(zone.ind2.gear.handline,Year==2018), aes( fill = fishing_pressure)) +
+   geom_sf_label(data=filter(zone.ind2.gear.year,Year==2018), aes(label = zone_id),
+                 label.padding = unit(0.25, "lines"),
+                 label.r = unit(0, "lines"), label.size = 0.4)+
+   scale_fill_gradient2(low="#f7fbff",high="#2171b5",name="Fishing Pressure",  #use this to format the scale, set the limits using the range you calculated
+                        na.value="gray90",limits=c(0,max(zone.ind2.range.handline[2]))) +
+   labs(title = paste0("Map of Fishing Effort by Handline for 2018"), x="Total Landings per sqkm", y=NULL) +  #create the correct labels for the plot
+   theme_bw()
+plot(fish.zone.handline.2018)
+
+plot_grid_fish_handline<-plot_grid(fish.zone.handline.2012, fish.zone.handline.2013, fish.zone.handline.2014,
+                                   fish.zone.handline.2015, fish.zone.handline.2016, fish.zone.handline.2017,
+                                   fish.zone.handline.2018)
+
+ggsave("Fishing_Effort_by_Handline_2012_2018.png", plot = plot_grid_fish_handline, device = "png", path="Final_Figures_Tables/",
+       scale = 1.25, width=12, height=8, units="in")
+
 
 ################## assessing annual lobster fishing effort by gear type and prepping for maps #################  
  
@@ -1411,9 +1873,9 @@ fish.years.gears <- zones.fish %>%
 head(fish.years.gears)
 plot(fish.years.gears$weight.total~fish.years.gears$Year, 
      col=fish.years.gears$Year)
-#using ggplot to create better looking plots of yearly summaries 
+#using ggplot to create better looking plots of yearly summaries for gear weight totals 
 fishing_years_gears_sum<-ggplot(fish.years.gears, mapping = aes(x=Year, y=weight.total))
-fishing_years_gears_sum+geom_point(aes(color=factor(Gear)),size=6)+ylim(0,2000)+
+fishing_years_gears_sum+geom_col(aes(fill=Gear),size=6)+ylim(0,4000)+
    theme(axis.text.x = element_text(size=20),
          axis.text.y = element_text(size=20),
          axis.title.x = element_text(size=25, face="bold"),
@@ -1423,6 +1885,19 @@ fishing_years_gears_sum+geom_point(aes(color=factor(Gear)),size=6)+ylim(0,2000)+
    labs(x="Year", y="Total Weight (kg)")+
    ggtitle("Total Weight of Fish Caught per Gear per Year From 2012-2018")
 ggsave("Fish_Year_Gear_Totals_2012-2018.png", path="Final_Figures_Tables/", width=14, height=9, units=c("in"))
+
+#using ggplot to create better looking plots of yearly summaries for average weight by gear type
+fishing_years_gears_sum<-ggplot(fish.years.gears, mapping = aes(x=Year, y=avg.wt.per.trip))
+fishing_years_gears_sum+geom_col(aes(fill=Gear),size=6)+ylim(0,1500)+
+   theme(axis.text.x = element_text(size=20),
+         axis.text.y = element_text(size=20),
+         axis.title.x = element_text(size=25, face="bold"),
+         axis.title.y = element_text(size=25, face="bold"),
+         plot.title = element_text(size=30, face="bold"))+
+   scale_x_continuous(breaks = seq(2012,2018 , by = 1))+
+   labs(x="Year", y="Average Weight (kg)")+
+   ggtitle("Average Weight of Fish Caught per Gear per Year From 2012-2018")
+ggsave("Fish_Year_Gear_Avg_2012-2018.png", path="Final_Figures_Tables/", width=14, height=9, units=c("in"))
 
 #looking at lobsters monthly to see if there is seasonality
 lob.months.season <- zones.lob %>% 
