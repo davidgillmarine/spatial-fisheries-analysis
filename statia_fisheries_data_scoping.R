@@ -6,7 +6,8 @@ library(cowplot)
 library(tidyverse)
 library(gridExtra)
 library("RColorBrewer")
-display.brewer.all()
+library(forcats)
+
 
 
 ###################################### Import the Data ##############################
@@ -473,22 +474,22 @@ prop.fam.weight <- fish.species %>%
               mean.pct.wt=mean(pct.wt,na.rm = T),
               num.samples=n()) %>%
    mutate(catch.prop=(num.samples/309), 
-          pie.prop=(mean.prop.wt*catch.prop)*100)%>%
+          pie.prop=(mean.prop.wt*catch.prop)*100,
+          pie.filter=ifelse(pie.prop<=.1,NA,pie.prop))%>%
     filter(!is.na(family))%>%
-   arrange(num.samples)
+   arrange(desc(pie.prop))
 head(prop.fam.weight)
+sum(prop.fam.weight$pie.filter, na.rm=T)
 
-pie.fam.wt<-prop.fam.weight%>%
-   filter(num.samples>73)
-head(pie.fam.wt)
-
-   
-
-ggplot(pie.fam.wt, aes(x="", y=mean.pct.wt, fill=family)) +
-   geom_bar(stat="identity", width=1, color="white") +
-   coord_polar("y", start=0) +
-   
-   theme_void() # remove background, grid, numeric labels
+prop.fam.weight%>%
+   mutate(Family = fct_reorder(family, pie.prop)) %>%
+   filter(pie.prop>=.1)%>%
+   ggplot( aes(x=Family, y=pie.prop)) +
+   geom_bar(stat="identity", fill="DARKGREEN") +
+   coord_flip() +
+   xlab("Family") +
+   ylab("Percent Catch Per Trip")+
+   theme_bw()
 
 # Proportion weight by family, gear
 prop.fam.gear.weight <- fish.species %>% 
