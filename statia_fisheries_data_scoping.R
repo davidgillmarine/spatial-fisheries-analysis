@@ -481,15 +481,40 @@ prop.fam.weight <- fish.species %>%
 head(prop.fam.weight)
 sum(prop.fam.weight$pie.filter, na.rm=T)
 
+#bar plot showing the percent composition of fish per trip with a mutiplier 
 prop.fam.weight%>%
    mutate(Family = fct_reorder(family, pie.prop)) %>%
-   filter(pie.prop>=.1)%>%
+   filter(pie.prop>.1)%>%
    ggplot( aes(x=Family, y=pie.prop)) +
    geom_bar(stat="identity", fill="DARKGREEN") +
    coord_flip() +
-   xlab("Family") +
-   ylab("Percent Catch Per Trip")+
-   theme_bw()
+   theme(axis.text.x = element_text(size=20),
+      axis.text.y = element_text(size=20),
+      axis.title.x = element_text(size=30, face="bold"),
+      axis.title.y = element_text(size=30, face="bold"),
+      plot.title = element_text(size=30, face="bold"))+
+   labs(title="Barplot Showing Relative % Catch Per Trip by Family",
+        x="Family", y="Relative % Catch Per Trip")
+ggsave("Relative_Pct_Catch_2012-2018.png", path="Final_Figures_Tables/",width=14, height=9, units=c("in"))
+
+#bar plot showing the mean percent catch composition of fish, however this does not seem as accurate as the 
+#above plot because there are some cases where it is the majority of the catch but only part of the time
+#so it does not get at the exploitation question like the other graph 
+#bar plot showing the percent composition of fish per trip with a mutiplier 
+prop.fam.weight%>%
+   mutate(Family = fct_reorder(family, mean.pct.wt)) %>%
+   filter(pie.prop>0)%>%
+   ggplot( aes(x=Family, y=mean.pct.wt)) +
+   geom_bar(stat="identity", fill="DARKGREEN") +
+   coord_flip() +
+   theme(axis.text.x = element_text(size=20),
+         axis.text.y = element_text(size=20),
+         axis.title.x = element_text(size=30, face="bold"),
+         axis.title.y = element_text(size=30, face="bold"),
+         plot.title = element_text(size=30, face="bold"))+
+   labs(title="Barplot Showing Mean % Catch Per Trip by Family",
+        x="Family", y="Mean % Catch Per Trip")
+ggsave("Mean_Pct_Catch_2012-2018.png", path="Final_Figures_Tables/",width=14, height=9, units=c("in"))
 
 # Proportion weight by family, gear
 prop.fam.gear.weight <- fish.species %>% 
