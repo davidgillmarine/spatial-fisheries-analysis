@@ -9,7 +9,6 @@ library("RColorBrewer")
 library(forcats)
 
 
-
 ###################################### Import the Data ##############################
 input.dir <- '~/OneDrive - Duke University/MP Project/spatial-fisheries-analysis/Data/' #set the import directory
 #input.dir <- 'R:/Gill/spatial-fisheries-analysis/tables/raw/' #set the import directory
@@ -64,7 +63,11 @@ gear.trips.month <- log.data %>%   #looking at the types of gear used, and the a
 fish.weight.year <- log.data %>%   # looking at the amount of fish caught per year
   filter(Landings=="Fish") %>%     # sort the data just by fish
   group_by(Year)%>%      #group by the relevent groups
-  summarize(fish_weight = sum(`Weight_(kg)`, na.rm=TRUE))   #summerize by these groups by unique Trip_ID and remove NAs
+  summarize(fish_weight = sum(`Weight_(kg)`, na.rm=TRUE),
+            n_distinct(Trip_ID))%>%   #summerize by these groups by unique Trip_ID and remove NAs
+   mutate(Fishing_Effort=fish_weight/64.89144)
+head(fish.weight.year)
+write_excel_csv(fish.weight.year, "Final_Figures_Tables/yearly_fishing_effort.xlxs")
 
 fish.weight.month <- log.data %>%     # looking at the amount of fish caught per year
   filter(Landings=="Fish") %>%         
@@ -642,7 +645,7 @@ gis.dir <- "/Users/gcullinan//OneDrive - Duke University/MP Project/spatial-fish
  plot(st_geometry(zone.ind))
  # get area
  zone.ind$area_m2 <- as.numeric(st_area(zone.ind))
- 
+ sum(zone.ind$area_m2)/1000000
  # changing the character type and joining the fishing summaries with the spatial geometries
  fishing.zones <-zone.fish.year%>%
    mutate (zone_id = as.character(zone_id))
