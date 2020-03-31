@@ -832,7 +832,7 @@ gis.dir <- "/Users/gcullinan//OneDrive - Duke University/MP Project/spatial-fish
 
  # saving files
  ggsave("Fishing_Effort_2012-2018.png", plot = plot_grid_fish, device = "png", path="Final_Figures_Tables/",scale = 1.25, width=12, height=8, units="in")
- ggsave("Fishing_Effort_2012-2018_pres.png", plot = fish_eff_pres, device = "png", path="Final_Figures_Tables/", scale=1.25,width=16, height=10, units="in")
+ ggsave("Fishing_Effort_2012-2018_pres.png", plot = fish_eff_pres, device = "png", path="Final_Figures_Tables/",scale=1.2, width=18, height=10, units="in")
  ggsave("Fishing_Effort_2012.png", plot = fish.zone.2012, device = "png", path="Final_Figures_Tables/")
  ggsave("Fishing_Effort_2013.png", plot = fish.zone.2013, device = "png", path="Final_Figures_Tables/")
  ggsave("Fishing_Effort_2014.png", plot = fish.zone.2014, device = "png", path="Final_Figures_Tables/")
@@ -1388,7 +1388,7 @@ fish_eff_gear_pres<-ggarrange(fish.zone.DL.HL+ rremove("xlab"),fish.zone.LL.TR+ 
                               common.legend = TRUE, legend = "top")
 
 ggsave("Fishing_Effort_by_Gear_Type.png", plot = plot_grid_fish_gear, device = "png", path="Final_Figures_Tables/",scale = 1.25, width=12, height=8, units="in")
-ggsave("Fishing_Effort_by_Gear_Type_pres.png", plot = fish_eff_gear_pres, device = "png", path="Final_Figures_Tables/", scale=1.25,width=16, height=10, units="in")
+ggsave("Fishing_Effort_by_Gear_Type_pres.png", plot = fish_eff_gear_pres, device = "png", path="Final_Figures_Tables/",scale=1.2, width=18, height=10, units="in")
 
 #looking at individual gears by year through 2018 
 fishing.zones.gear.year <-zone.fish.gear.year%>%
@@ -2457,7 +2457,7 @@ plot(fish.inpark.2019)
 
 # saving files
 ggsave("Fishing_Effort_Inpark_2012-2018.png", plot = fish.inpark, device = "png", path="Final_Figures_Tables/",scale = 1.25, width=12, height=8, units="in")
-ggsave("Fishing_Effort_Inpark_2012-2018_pres.png", plot = fish_eff_inpark_pres, device = "png", path="Final_Figures_Tables/", scale=1.25,width=16, height=10, units="in")
+ggsave("Fishing_Effort_Inpark_2012-2018_pres.png", plot = fish_eff_inpark_pres, device = "png", path="Final_Figures_Tables/",scale=1.2, width=18, height=10, units="in")
 ggsave("Fishing_Effort_Inpark_2012.png", plot = fish.inpark.2012, device = "png", path="Final_Figures_Tables/")
 ggsave("Fishing_Effort_Inpark_2013.png", plot = fish.inpark.2013, device = "png", path="Final_Figures_Tables/")
 ggsave("Fishing_Effort_Inpark_2014.png", plot = fish.inpark.2014, device = "png", path="Final_Figures_Tables/")
