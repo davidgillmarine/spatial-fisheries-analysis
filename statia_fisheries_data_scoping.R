@@ -819,6 +819,7 @@ gis.dir <- "/Users/gcullinan//OneDrive - Duke University/MP Project/spatial-fish
            labels = c("2012", "2013","2014","2015","2016","2017","2018"),
            font.label = list(size = 30, face = "bold"),
            common.legend = TRUE, legend = "top")
+ fish_eff_pres
  
  plot(fish.zone.2012)
  plot(fish.zone.2013)
@@ -1289,8 +1290,14 @@ fish.zone.DL.HL <- ggplot() +
   scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Effort (kg/km^2/yr)",  #use this to format the scale, set the limits using the range you calculated
                        na.value="gray",limits=c(0,max(zone.ind2.range.gear[2]))) +
   labs(title = paste0("Drop and Hand Line"), x="Total Landings per sqkm", y=NULL) +  #create the correct labels for the plot
-  theme(panel.background = element_rect(fill = "white", colour = "black") ,
-        plot.title = element_text(size=20, face="bold"))
+   theme(panel.background = element_rect(fill = "white", colour = "black"),
+         legend.text = element_text(size = 16),
+         legend.title = element_text(size=20, face = "bold"),
+         legend.key.size = unit(1, "inches"),
+         axis.text.x = element_text(size=12),
+         axis.text.y = element_text(size=12),
+         axis.title.x = element_text(size=15, face="bold"),
+        plot.title = element_text(size=25, face="bold"))
 plot(fish.zone.DL.HL)
 
 fish.zone.SD.FD <- ggplot() +
@@ -1302,8 +1309,14 @@ fish.zone.SD.FD <- ggplot() +
   scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Effort (kg/km^2/yr)",  #use this to format the scale, set the limits using the range you calculated
                        na.value="gray",limits=c(0,max(zone.ind2.range.gear[2]))) +
   labs(title = paste0("Scuba and Free Diving"), x="Total Landings per sqkm", y=NULL) +
-  theme(panel.background = element_rect(fill = "white", colour = "black") ,
-        plot.title = element_text(size=20, face="bold"))
+   theme(panel.background = element_rect(fill = "white", colour = "black"),
+         legend.text = element_text(size = 16),
+         legend.title = element_text(size=20, face = "bold"),
+         legend.key.size = unit(1, "inches"),
+         axis.text.x = element_text(size=12),
+         axis.text.y = element_text(size=12),
+         axis.title.x = element_text(size=15, face="bold") ,
+        plot.title = element_text(size=25, face="bold"))
 plot(fish.zone.SD.FD)
 
 fish.zone.LL.TR <- ggplot() +
@@ -1316,8 +1329,14 @@ fish.zone.LL.TR <- ggplot() +
   scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Effort (kg/km^2/yr)",  #use this to format the scale, set the limits using the range you calculated
                        limits=c(0,max(zone.ind2.range.gear[2]))) +
   labs(title = paste0("Trolling and Long Line"), x="Total Landings per sqkm", y=NULL) +
-  theme(panel.background = element_rect(fill = "white", colour = "black"),legend.position = "none",
-        plot.title = element_text(size=20, face="bold"))
+   theme(panel.background = element_rect(fill = "white", colour = "black"),
+         legend.text = element_text(size = 16),
+         legend.title = element_text(size=20, face = "bold"),
+         legend.key.size = unit(1, "inches"),
+         axis.text.x = element_text(size=12),
+         axis.text.y = element_text(size=12),
+         axis.title.x = element_text(size=15, face="bold"),
+        plot.title = element_text(size=25, face="bold"))
 plot(fish.zone.LL.TR)
 
 fish.zone.PT <- ggplot() +
@@ -1329,8 +1348,14 @@ fish.zone.PT <- ggplot() +
   scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Effort (kg/km^2/yr)",  #use this to format the scale, set the limits using the range you calculated
                        na.value="gray",limits=c(0,max(zone.ind2.range.gear[2]))) +
   labs(title = paste0("Pot Traps"), x="Total Landings per sqkm", y=NULL) +  #create the correct labels for the plot
-  theme(panel.background = element_rect(fill = "white", colour = "black") ,
-        plot.title = element_text(size=20, face="bold"))
+   theme(panel.background = element_rect(fill = "white", colour = "black"),
+         legend.text = element_text(size = 16),
+         legend.title = element_text(size=20, face = "bold"),
+         legend.key.size = unit(1, "inches"),
+         axis.text.x = element_text(size=12),
+         axis.text.y = element_text(size=12),
+         axis.title.x = element_text(size=15, face="bold") ,
+        plot.title = element_text(size=25, face="bold"))
 plot(fish.zone.PT)
 
 fish.zone.NET <- ggplot() +
@@ -1343,19 +1368,27 @@ fish.zone.NET <- ggplot() +
   scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Effort (kg/km^2/yr)",  #use this to format the scale, set the limits using the range you calculated
                        na.value="gray",limits=c(0,max(zone.ind2.range.gear[2]))) +
   labs(title = paste0("Beach Seine"), x="Total Landings per sqkm", y=NULL) +  #create the correct labels for the plot
-  theme(panel.background = element_rect(fill = "white", colour = "black"),
-        plot.title = element_text(size=20, face="bold"))
+   theme(panel.background = element_rect(fill = "white", colour = "black"),
+         legend.text = element_text(size = 16),
+         legend.title = element_text(size=20, face = "bold"),
+         legend.key.size = unit(1, "inches"),
+         axis.text.x = element_text(size=12),
+         axis.text.y = element_text(size=12),
+         axis.title.x = element_text(size=15, face="bold"),
+        plot.title = element_text(size=25, face="bold"))
 plot(fish.zone.NET)
 
 plot_grid_fish_gear<-plot_grid(fish.zone.DL.HL,fish.zone.LL.TR,fish.zone.SD.FD, 
                                fish.zone.PT, fish.zone.NET)
 plot(plot_grid_fish_gear)
 
-ggarrange(fish.zone.DL.HL,fish.zone.LL.TR,fish.zone.SD.FD, 
-          fish.zone.PT, fish.zone.NET,
-          common.legend = TRUE, legend = "top")
+fish_eff_gear_pres<-ggarrange(fish.zone.DL.HL+ rremove("xlab"),fish.zone.LL.TR+ rremove("xlab"),
+                              fish.zone.SD.FD+ rremove("xlab"), fish.zone.PT+ rremove("xlab"), 
+                              fish.zone.NET+ rremove("xlab"),
+                              common.legend = TRUE, legend = "top")
 
 ggsave("Fishing_Effort_by_Gear_Type.png", plot = plot_grid_fish_gear, device = "png", path="Final_Figures_Tables/",scale = 1.25, width=12, height=8, units="in")
+ggsave("Fishing_Effort_by_Gear_Type_pres.png", plot = fish_eff_gear_pres, device = "png", path="Final_Figures_Tables/", scale=1.25,width=16, height=10, units="in")
 
 #looking at individual gears by year through 2018 
 fishing.zones.gear.year <-zone.fish.gear.year%>%
@@ -2264,7 +2297,15 @@ fish.inpark.2012 <- ggplot() +    #enable the ggplot layer
   scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Effort (kg/km^2/yr)",  #use this to format the scale, set the limits using the range you calculated
                        na.value="gray",limits=c(0,max(zone.ind.inpark.range.fish[2]))) +
   labs( x="Total Landings per sqkm", y=NULL) +  #create the correct labels for the plot
-  theme(panel.background = element_rect(fill = "white", colour = "black") )  #set the theme of the plot to blue and white 
+   theme(panel.background = element_rect(fill = "white", colour = "black"),
+         legend.text = element_text(size = 16),
+         legend.title = element_text(size=20, face = "bold"),
+         legend.key.size = unit(1, "inches"),
+         axis.text.x = element_text(size=12),
+         axis.text.y = element_text(size=12),
+         axis.title.x = element_text(size=15, face="bold"))+  #set the theme of the plot to blue and white 
+   scale_y_continuous(breaks = seq(17.46, 17.52, by = .02))
+
 fish.inpark.2013 <- ggplot() +
    geom_sf(data=map.fill, fill="beige")+
   geom_sf(data=filter(zone.ind2.inpark,Year==2013), aes(fill = fishing_pressure)) +
@@ -2274,7 +2315,15 @@ fish.inpark.2013 <- ggplot() +
   scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Effort (kg/km^2/yr)",
                        na.value="gray",limits=c(0,max(zone.ind.inpark.range.fish[2]))) +
   labs( x="Total Landings per sqkm", y=NULL) +
-  theme(panel.background = element_rect(fill = "white", colour = "black") ) 
+   theme(panel.background = element_rect(fill = "white", colour = "black"),
+         legend.text = element_text(size = 16),
+         legend.title = element_text(size=20, face = "bold"),
+         legend.key.size = unit(1, "inches"),
+         axis.text.x = element_text(size=12),
+         axis.text.y = element_text(size=12),
+         axis.title.x = element_text(size=15, face="bold"))+
+   scale_y_continuous(breaks = seq(17.46, 17.52, by = .02))
+
 fish.inpark.2014 <- ggplot() +
    geom_sf(data=map.fill, fill="beige")+
   geom_sf(data=zone.clip, fill="grey")+
@@ -2285,7 +2334,15 @@ fish.inpark.2014 <- ggplot() +
   scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Effort (kg/km^2/yr)",
                        na.value="gray",limits=c(0,max(zone.ind.inpark.range.fish[2]))) +
   labs( x="Total Landings per sqkm", y=NULL) +
-  theme(panel.background = element_rect(fill = "white", colour = "black") )
+   theme(panel.background = element_rect(fill = "white", colour = "black"),
+         legend.text = element_text(size = 16),
+         legend.title = element_text(size=20, face = "bold"),
+         legend.key.size = unit(1, "inches"),
+         axis.text.x = element_text(size=12),
+         axis.text.y = element_text(size=12),
+         axis.title.x = element_text(size=15, face="bold"))+
+   scale_y_continuous(breaks = seq(17.46, 17.52, by = .02))
+
 fish.inpark.2015 <- ggplot() +
    geom_sf(data=map.fill, fill="beige")+
   geom_sf(data=zone.clip, fill="grey")+
@@ -2296,7 +2353,15 @@ fish.inpark.2015 <- ggplot() +
   scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Effort (kg/km^2/yr)",
                        na.value="gray",limits=c(0,max(zone.ind.inpark.range.fish[2]))) +
   labs( x="Total Landings per sqkm", y=NULL) +
-  theme(panel.background = element_rect(fill = "white", colour = "black") )
+   theme(panel.background = element_rect(fill = "white", colour = "black"),
+         legend.text = element_text(size = 16),
+         legend.title = element_text(size=20, face = "bold"),
+         legend.key.size = unit(1, "inches"),
+         axis.text.x = element_text(size=12),
+         axis.text.y = element_text(size=12),
+         axis.title.x = element_text(size=15, face="bold"))+
+   scale_y_continuous(breaks = seq(17.46, 17.52, by = .02))
+
 fish.inpark.2016 <- ggplot() +
    geom_sf(data=map.fill, fill="beige")+
   geom_sf(data=filter(zone.ind2.inpark,Year==2016), aes(fill = fishing_pressure)) +
@@ -2306,7 +2371,15 @@ fish.inpark.2016 <- ggplot() +
   scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Effort (kg/km^2/yr)",
                        na.value="gray",limits=c(0,max(zone.ind.inpark.range.fish[2]))) +
   labs( x="Total Landings per sqkm", y=NULL) +
-  theme(panel.background = element_rect(fill = "white", colour = "black"))
+   theme(panel.background = element_rect(fill = "white", colour = "black"),
+         legend.text = element_text(size = 16),
+         legend.title = element_text(size=20, face = "bold"),
+         legend.key.size = unit(1, "inches"),
+         axis.text.x = element_text(size=12),
+         axis.text.y = element_text(size=12),
+         axis.title.x = element_text(size=15, face="bold"))+
+   scale_y_continuous(breaks = seq(17.46, 17.52, by = .02))
+
 fish.inpark.2017 <- ggplot() +
    geom_sf(data=map.fill, fill="beige")+
   geom_sf(data=filter(zone.ind2.inpark,Year==2017), aes(fill = fishing_pressure)) +
@@ -2316,7 +2389,15 @@ fish.inpark.2017 <- ggplot() +
   scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Effort (kg/km^2/yr)",
                        na.value="gray",limits=c(0,max(zone.ind.inpark.range.fish[2]))) +
   labs( x="Total Landings per sqkm", y=NULL) +
-  theme(panel.background = element_rect(fill = "white", colour = "black") )
+   theme(panel.background = element_rect(fill = "white", colour = "black"),
+         legend.text = element_text(size = 16),
+         legend.title = element_text(size=20, face = "bold"),
+         legend.key.size = unit(1, "inches"),
+         axis.text.x = element_text(size=12),
+         axis.text.y = element_text(size=12),
+         axis.title.x = element_text(size=15, face="bold"))+
+   scale_y_continuous(breaks = seq(17.46, 17.52, by = .02))
+
 fish.inpark.2018 <- ggplot() +
    geom_sf(data=map.fill, fill="beige")+
   geom_sf(data=zone.clip, fill="grey")+
@@ -2327,7 +2408,15 @@ fish.inpark.2018 <- ggplot() +
   scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Effort (kg/km^2/yr)",
                        na.value="gray",limits=c(0,max(zone.ind.inpark.range.fish[2]))) +
   labs( x="Total Landings per sqkm", y=NULL) +
-  theme(panel.background = element_rect(fill = "white", colour = "black") )
+   theme(panel.background = element_rect(fill = "white", colour = "black"),
+         legend.text = element_text(size = 16),
+         legend.title = element_text(size=20, face = "bold"),
+         legend.key.size = unit(1, "inches"),
+         axis.text.x = element_text(size=12),
+         axis.text.y = element_text(size=12),
+         axis.title.x = element_text(size=15, face="bold"))+
+   scale_y_continuous(breaks = seq(17.46, 17.52, by = .02))
+
 fish.inpark.2019 <- ggplot() +
    geom_sf(data=map.fill, fill="beige")+
   geom_sf(data=filter(zone.ind2.inpark,Year==2019), aes(fill = fishing_pressure)) +
@@ -2337,16 +2426,25 @@ fish.inpark.2019 <- ggplot() +
   scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Effort (kg/km^2/yr)",
                        na.value="gray",limits=c(0,max(zone.ind.inpark.range.fish[2]))) +
   labs(title = paste0("Fishing Effort in the Marine Park for 2019"), x="Total Landings per sqkm", y=NULL) +
-  theme(panel.background = element_rect(fill = "white", colour = "black"))
+   theme(panel.background = element_rect(fill = "white", colour = "black"),
+         legend.text = element_text(size = 16),
+         legend.title = element_text(size=20, face = "bold"),
+         legend.key.size = unit(1, "inches"),
+         axis.text.x = element_text(size=12),
+         axis.text.y = element_text(size=12),
+         axis.title.x = element_text(size=15, face="bold"))+
+   scale_y_continuous(breaks = seq(17.46, 17.52, by = .02))
 
 fish.inpark<-plot_grid(fish.inpark.2012,fish.inpark.2013,fish.inpark.2014, fish.inpark.2015, 
           fish.inpark.2016, fish.inpark.2017, fish.inpark.2018)
 plot(fish.inpark)
 
-ggarrange(fish.inpark.2012,fish.inpark.2013,fish.inpark.2014, fish.inpark.2015, 
-          fish.inpark.2016, fish.inpark.2017, fish.inpark.2018, labels = c("2012", "2013","2014","2015","2016","2017","2018"),
-          font.label = list(size = 20, face = "bold"),
-          common.legend = TRUE, legend = "top")
+fish_eff_inpark_pres<-ggarrange(fish.inpark.2012+ rremove("xlab"),fish.inpark.2013+ rremove("xlab"),
+                                fish.inpark.2014+ rremove("xlab"), fish.inpark.2015+ rremove("xlab"), 
+                                fish.inpark.2016+ rremove("xlab"), fish.inpark.2017+ rremove("xlab"), 
+                                fish.inpark.2018+ rremove("xlab"), 
+                                labels = c("2012", "2013","2014","2015","2016","2017","2018"),
+                                font.label = list(size = 30, face = "bold"), common.legend = TRUE, legend = "top")
 
 plot(fish.inpark.2012)
 plot(fish.inpark.2013)
@@ -2359,6 +2457,7 @@ plot(fish.inpark.2019)
 
 # saving files
 ggsave("Fishing_Effort_Inpark_2012-2018.png", plot = fish.inpark, device = "png", path="Final_Figures_Tables/",scale = 1.25, width=12, height=8, units="in")
+ggsave("Fishing_Effort_Inpark_2012-2018_pres.png", plot = fish_eff_inpark_pres, device = "png", path="Final_Figures_Tables/", scale=1.25,width=16, height=10, units="in")
 ggsave("Fishing_Effort_Inpark_2012.png", plot = fish.inpark.2012, device = "png", path="Final_Figures_Tables/")
 ggsave("Fishing_Effort_Inpark_2013.png", plot = fish.inpark.2013, device = "png", path="Final_Figures_Tables/")
 ggsave("Fishing_Effort_Inpark_2014.png", plot = fish.inpark.2014, device = "png", path="Final_Figures_Tables/")
