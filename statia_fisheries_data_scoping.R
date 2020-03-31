@@ -628,9 +628,11 @@ gis.dir <- "/Users/gcullinan//OneDrive - Duke University/MP Project/spatial-fish
 #gis.dir <-"R:/Gill/spatial-fisheries-analysis/tables/raw/Fisheries_Zones"
 
  allfiles <- list.files(gis.dir,recursive = T, full.names = T) 
+ allfiles
  # Select kml files with 1) digit then 1 letter, 2) digit then 2 letters, 3) digit then .kml, 4) digit then buffer
  file.list <- c(grep("Zone_[0-9]{1}.kml",allfiles,value = T),
-                grep("FAD_[0-9]_[a-z]*",allfiles,value = T))
+                #grep("FAD_[0-9]_[a-z]*",allfiles,value = T),
+                grep("St_Eustatius_*",allfiles,value = T))
  
  zone.ind <- st_read(file.list[1])
  zone.ind$zone_id <- as.character(gsub("Zone_","", zone.ind$Name)) # removes all non-digit characters
@@ -645,9 +647,19 @@ gis.dir <- "/Users/gcullinan//OneDrive - Duke University/MP Project/spatial-fish
  }
  # head map
  plot(st_geometry(zone.ind))
- # get area
+ 
+ #create areas for erasing and intersecting for the Marine park (A) and land area (B) and zones 
+ A<-zone.ind
+ B<-st_read(file.list[9])
+ # Erase land area (B) from marine park polygon (A)
+ zone.ind <-st_difference(A,B) # erase area in the remaining zones that overlap with A 
+ map.fill<-st_difference(B,zone.ind)
+ plot(st_geometry(zone.ind))
+ plot(st_geometry(map.fill))
+ 
+# get area
  zone.ind$area_m2 <- as.numeric(st_area(zone.ind))
- sum(zone.ind$area_m2)/1000000
+ sum(zone.ind$area_m2[1:8])/1000000
  # changing the character type and joining the fishing summaries with the spatial geometries
  fishing.zones <-zone.fish.year%>%
    mutate (zone_id = as.character(zone_id))
@@ -674,86 +686,138 @@ gis.dir <- "/Users/gcullinan//OneDrive - Duke University/MP Project/spatial-fish
  
  # Plot fishing pressure maps
  fish.zone.2012 <- ggplot() +    #enable the ggplot layer 
-   geom_sf(data=filter(zone.ind2,Year==2012), aes(fill = fishing_pressure)) +  #use the geom_sf to plot spatially
-   geom_sf_label(data=filter(zone.ind2,Year==2012), aes(label = zone_id),
+    geom_sf(data=map.fill, fill="beige")+ 
+    geom_sf(data=filter(zone.ind2,Year==2012), aes(fill = fishing_pressure)) +  #use the geom_sf to plot spatially
+    geom_sf_label(data=filter(zone.ind2,Year==2012), aes(label = zone_id),
                  label.padding = unit(0.25, "lines"),
                  label.r = unit(0, "lines"), label.size = 0.4)+
-   scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Pressure",  #use this to format the scale, set the limits using the range you calculated
+   scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Effort (kg/km^2/yr)",  #use this to format the scale, set the limits using the range you calculated
                         na.value="gray",limits=c(0,max(zone.ind.range.fish[2]))) +
    labs(x="Total Landings per sqkm", y=NULL) +  #create the correct labels for the plot
-   theme(panel.background = element_rect(fill = "white", colour = "black"), legend.position="none")  #set the theme of the plot to blue and white 
+   theme(panel.background = element_rect(fill = "white", colour = "black"),
+         legend.text = element_text(size = 16),
+         legend.title = element_text(size=20, face = "bold"),
+         legend.key.size = unit(1, "inches"),
+         axis.text.x = element_text(size=12),
+         axis.text.y = element_text(size=12),
+         axis.title.x = element_text(size=15, face="bold"))  #set the theme of the plot to blue and white 
  fish.zone.2013 <- ggplot() +
+   geom_sf(data=map.fill, fill="beige")+ 
    geom_sf(data=filter(zone.ind2,Year==2013), aes(fill = fishing_pressure)) +
    geom_sf_label(data=filter(zone.ind2,Year==2012), aes(label = zone_id),
                  label.padding = unit(0.25, "lines"),
                  label.r = unit(0, "lines"), label.size = 0.4)+
-   scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Pressure",  #use this to format the scale, set the limits using the range you calculated
+   scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Effort (kg/km^2/yr)",  #use this to format the scale, set the limits using the range you calculated
                         na.value="gray",limits=c(0,max(zone.ind.range.fish[2]))) +
    labs(x="Total Landings per sqkm", y=NULL) +  #create the correct labels for the plot
-   theme(panel.background = element_rect(fill = "white", colour = "black"),legend.position="none") 
+    theme(panel.background = element_rect(fill = "white", colour = "black"),
+          legend.text = element_text(size = 8),
+          legend.title = element_text(size=12, face = "bold"),
+          axis.text.x = element_text(size=12),
+          axis.text.y = element_text(size=12),
+          axis.title.x = element_text(size=15, face="bold"))  #set the theme of the plot to blue and white 
  fish.zone.2014 <- ggplot() +
+   geom_sf(data=map.fill, fill="beige")+ 
    geom_sf(data=filter(zone.ind2,Year==2014), aes(fill = fishing_pressure)) +
    geom_sf_label(data=filter(zone.ind2,Year==2012), aes(label = zone_id),
                  label.padding = unit(0.25, "lines"),
                  label.r = unit(0, "lines"), label.size = 0.4)+
-   scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Pressure",  #use this to format the scale, set the limits using the range you calculated
+   scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Effort (kg/km^2/yr)",  #use this to format the scale, set the limits using the range you calculated
                         na.value="gray",limits=c(0,max(zone.ind.range.fish[2]))) +
    labs(x="Total Landings per sqkm", y=NULL) +  #create the correct labels for the plot
-   theme(panel.background = element_rect(fill = "white", colour = "black"),legend.position="none")
+    theme(panel.background = element_rect(fill = "white", colour = "black"),
+          legend.text = element_text(size = 8),
+          legend.title = element_text(size=12, face = "bold"),
+          axis.text.x = element_text(size=12),
+          axis.text.y = element_text(size=12),
+          axis.title.x = element_text(size=15, face="bold"))  #set the theme of the plot to blue and white 
  fish.zone.2015 <- ggplot() +
+   geom_sf(data=map.fill, fill="beige")+ 
    geom_sf(data=filter(zone.ind2,Year==2015), aes(fill = fishing_pressure)) +
    geom_sf_label(data=filter(zone.ind2,Year==2012), aes(label = zone_id),
                  label.padding = unit(0.25, "lines"),
                  label.r = unit(0, "lines"), label.size = 0.4)+
-   scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Pressure",  #use this to format the scale, set the limits using the range you calculated
+   scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Effort (kg/km^2/yr)",  #use this to format the scale, set the limits using the range you calculated
                         na.value="gray",limits=c(0,max(zone.ind.range.fish[2]))) +
    labs(x="Total Landings per sqkm", y=NULL) +  #create the correct labels for the plot
-   theme(panel.background = element_rect(fill = "white", colour = "black"), legend.position = "none")
+    theme(panel.background = element_rect(fill = "white", colour = "black"),
+          legend.text = element_text(size = 8),
+          legend.title = element_text(size=12, face = "bold"),
+          axis.text.x = element_text(size=12),
+          axis.text.y = element_text(size=12),
+          axis.title.x = element_text(size=15, face="bold"))  #set the theme of the plot to blue and white 
  fish.zone.2016 <- ggplot() +
+   geom_sf(data=map.fill, fill="beige")+ 
    geom_sf(data=filter(zone.ind2,Year==2016), aes(fill = fishing_pressure)) +
    geom_sf_label(data=filter(zone.ind2,Year==2012), aes(label = zone_id),
                  label.padding = unit(0.25, "lines"),
                  label.r = unit(0, "lines"), label.size = 0.4)+
-   scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Pressure",  #use this to format the scale, set the limits using the range you calculated
+   scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Effort (kg/km^2/yr)",  #use this to format the scale, set the limits using the range you calculated
                         na.value="gray",limits=c(0,max(zone.ind.range.fish[2]))) +
    labs(x="Total Landings per sqkm", y=NULL) +  #create the correct labels for the plot
-   theme(panel.background = element_rect(fill = "white", colour = "black"))
+    theme(panel.background = element_rect(fill = "white", colour = "black"),
+          legend.text = element_text(size = 8),
+          legend.title = element_text(size=12, face = "bold"),
+          axis.text.x = element_text(size=12),
+          axis.text.y = element_text(size=12),
+          axis.title.x = element_text(size=15, face="bold"))  #set the theme of the plot to blue and white 
  fish.zone.2017 <- ggplot() +
+   geom_sf(data=map.fill, fill="beige")+ 
    geom_sf(data=filter(zone.ind2,Year==2017), aes(fill = fishing_pressure)) +
    geom_sf_label(data=filter(zone.ind2,Year==2012), aes(label = zone_id),
                  label.padding = unit(0.25, "lines"),
                  label.r = unit(0, "lines"), label.size = 0.4)+
-   scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Pressure",  #use this to format the scale, set the limits using the range you calculated
+   scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Effort (kg/km^2/yr)",  #use this to format the scale, set the limits using the range you calculated
                         na.value="gray",limits=c(0,max(zone.ind.range.fish[2]))) +
    labs(x="Total Landings per sqkm", y=NULL) +  #create the correct labels for the plot
-   theme(panel.background = element_rect(fill = "white", colour = "black"), legend.position="none")
+    theme(panel.background = element_rect(fill = "white", colour = "black"),
+          legend.text = element_text(size = 8),
+          legend.title = element_text(size=12, face = "bold"),
+          axis.text.x = element_text(size=12),
+          axis.text.y = element_text(size=12),
+          axis.title.x = element_text(size=15, face="bold"))  #set the theme of the plot to blue and white 
  fish.zone.2018 <- ggplot() +
+   geom_sf(data=map.fill, fill="beige")+ 
    geom_sf(data=filter(zone.ind2,Year==2018), aes(fill = fishing_pressure)) +
    geom_sf_label(data=filter(zone.ind2,Year==2012), aes(label = zone_id),
                  label.padding = unit(0.25, "lines"),
                  label.r = unit(0, "lines"), label.size = 0.4)+
-   scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Pressure",  #use this to format the scale, set the limits using the range you calculated
+   scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Effort (kg/km^2/yr)",  #use this to format the scale, set the limits using the range you calculated
                         na.value="gray",limits=c(0,max(zone.ind.range.fish[2]))) +
    labs(x="Total Landings per sqkm", y=NULL) +  #create the correct labels for the plot
-   theme(panel.background = element_rect(fill = "white", colour = "black"),legend.position="none")
+    theme(panel.background = element_rect(fill = "white", colour = "black"),
+          legend.text = element_text(size = 8),
+          legend.title = element_text(size=12, face = "bold"),
+          axis.text.x = element_text(size=12),
+          axis.text.y = element_text(size=12),
+          axis.title.x = element_text(size=15, face="bold"))  #set the theme of the plot to blue and white 
  fish.zone.2019 <- ggplot() +
+   geom_sf(data=map.fill, fill="beige")+ 
    geom_sf(data=filter(zone.ind2,Year==2019), aes(fill = fishing_pressure)) +
    geom_sf_label(data=filter(zone.ind2,Year==2012), aes(label = zone_id),
                  label.padding = unit(0.25, "lines"),
                  label.r = unit(0, "lines"), label.size = 0.4)+
-   scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Pressure",  #use this to format the scale, set the limits using the range you calculated
+   scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Effort (kg/km^2/yr)",  #use this to format the scale, set the limits using the range you calculated
                         na.value="gray",limits=c(0,max(zone.ind.range.fish[2]))) +
    labs(title = paste0("Fishing Effort for 2019"), x="Total Landings per sqkm", y=NULL) +  #create the correct labels for the plot
-   theme(panel.background = element_rect(fill = "white", colour = "black"),legend.position="none")
+    theme(panel.background = element_rect(fill = "white", colour = "black"),
+          legend.text = element_text(size = 8),
+          legend.title = element_text(size=12, face = "bold"),
+          axis.text.x = element_text(size=12),
+          axis.text.y = element_text(size=12),
+          axis.title.x = element_text(size=15, face="bold"))  #set the theme of the plot to blue and white 
  
  plot_grid_fish<-plot_grid(fish.zone.2012,fish.zone.2013,fish.zone.2014, 
                            fish.zone.2015, fish.zone.2016,
                            fish.zone.2017, fish.zone.2018)
  plot(plot_grid_fish)
- ggarrange(fish.zone.2012,fish.zone.2013,fish.zone.2014, 
-           fish.zone.2015, fish.zone.2016,
-           fish.zone.2017, fish.zone.2018, labels = c("2012", "2013","2014","2015","2016","2017","2018"),
-           font.label = list(size = 20, face = "bold"),
+ 
+ fish_eff_pres<-ggarrange(fish.zone.2012 + rremove("xlab"),fish.zone.2013+ rremove("xlab"),
+                          fish.zone.2014+ rremove("xlab"), fish.zone.2015+ rremove("xlab"), 
+                          fish.zone.2016+ rremove("xlab"),fish.zone.2017+ rremove("xlab"), 
+                          fish.zone.2018+ rremove("xlab"),
+           labels = c("2012", "2013","2014","2015","2016","2017","2018"),
+           font.label = list(size = 30, face = "bold"),
            common.legend = TRUE, legend = "top")
  
  plot(fish.zone.2012)
@@ -767,6 +831,7 @@ gis.dir <- "/Users/gcullinan//OneDrive - Duke University/MP Project/spatial-fish
 
  # saving files
  ggsave("Fishing_Effort_2012-2018.png", plot = plot_grid_fish, device = "png", path="Final_Figures_Tables/",scale = 1.25, width=12, height=8, units="in")
+ ggsave("Fishing_Effort_2012-2018_pres.png", plot = fish_eff_pres, device = "png", path="Final_Figures_Tables/", scale=1.25,width=16, height=10, units="in")
  ggsave("Fishing_Effort_2012.png", plot = fish.zone.2012, device = "png", path="Final_Figures_Tables/")
  ggsave("Fishing_Effort_2013.png", plot = fish.zone.2013, device = "png", path="Final_Figures_Tables/")
  ggsave("Fishing_Effort_2014.png", plot = fish.zone.2014, device = "png", path="Final_Figures_Tables/")
@@ -1169,7 +1234,8 @@ gis.dir <- "/Users/gcullinan//OneDrive - Duke University/MP Project/spatial-fish
 
 allfiles <- list.files(gis.dir,recursive = T, full.names = T) 
 # Select kml files with 1) digit then 1 letter, 2) digit then 2 letters, 3) digit then .kml, 4) digit then buffer
-file.list.gear <- c(grep("Zone_[0-9]{1}.kml",allfiles,value = T))
+file.list.gear <- c(grep("Zone_[0-9]{1}.kml",allfiles,value = T),
+                    grep("St_Eustatius_*",allfiles,value = T))
 
 zone.ind.gear <- st_read(file.list.gear[1])
 zone.ind.gear$zone_id <- as.character(gsub("Zone_","", zone.ind.gear$Name)) # removes all non-digit characters
@@ -1184,6 +1250,15 @@ for (i in (2:length(file.list.gear))) {
 }
 # head map
 plot(st_geometry(zone.ind.gear))
+
+#create areas for erasing and intersecting for the Marine park (A) and land area (B) and zones 
+A<-zone.ind.gear
+B<-st_read(file.list.gear[9])
+# Erase land area (B) from marine park polygon (A)
+zone.ind.gear <-st_difference(A,B) # erase area in the remaining zones that overlap with A 
+plot(st_geometry(zone.ind.gear))
+
+
 # get area
 zone.ind.gear$area_m2 <- as.numeric(st_area(zone.ind.gear))
 
@@ -1206,36 +1281,39 @@ zone.ind2.range.gear #check to make sure it worked
 
 # Plot fishing pressure maps by gear type 
 fish.zone.DL.HL <- ggplot() +
+   geom_sf(data=map.fill, fill="beige")+
   geom_sf(data=filter(zone.ind2.gear,Gear=="HL"| Gear=="DL"), aes( fill = fishing_pressure)) +
   geom_sf_label(data=filter(zone.ind2.gear,Gear=="HL"| Gear=="DL"), aes(label = zone_id),
                 label.padding = unit(0.25, "lines"),
                 label.r = unit(0, "lines"), label.size = 0.4)+
-  scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Pressure",  #use this to format the scale, set the limits using the range you calculated
+  scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Effort (kg/km^2/yr)",  #use this to format the scale, set the limits using the range you calculated
                        na.value="gray",limits=c(0,max(zone.ind2.range.gear[2]))) +
   labs(title = paste0("Drop and Hand Line"), x="Total Landings per sqkm", y=NULL) +  #create the correct labels for the plot
-  theme(panel.background = element_rect(fill = "white", colour = "black"),legend.position="none",
+  theme(panel.background = element_rect(fill = "white", colour = "black") ,
         plot.title = element_text(size=20, face="bold"))
 plot(fish.zone.DL.HL)
 
 fish.zone.SD.FD <- ggplot() +
+   geom_sf(data=map.fill, fill="beige")+
   geom_sf(data=filter(zone.ind2.gear,Gear=="SD"| Gear=="FD"), aes( fill = fishing_pressure)) +
   geom_sf_label(data=filter(zone.ind2.gear,Gear=="SD"| Gear=="FD"), aes(label = zone_id),
                 label.padding = unit(0.25, "lines"),
                 label.r = unit(0, "lines"), label.size = 0.4)+
-  scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Pressure",  #use this to format the scale, set the limits using the range you calculated
+  scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Effort (kg/km^2/yr)",  #use this to format the scale, set the limits using the range you calculated
                        na.value="gray",limits=c(0,max(zone.ind2.range.gear[2]))) +
   labs(title = paste0("Scuba and Free Diving"), x="Total Landings per sqkm", y=NULL) +
-  theme(panel.background = element_rect(fill = "white", colour = "black"),legend.position="none",
+  theme(panel.background = element_rect(fill = "white", colour = "black") ,
         plot.title = element_text(size=20, face="bold"))
 plot(fish.zone.SD.FD)
 
 fish.zone.LL.TR <- ggplot() +
+   geom_sf(data=map.fill, fill="beige")+
   geom_sf(data=zone.ind.gear, fill="grey")+
   geom_sf(data=filter(zone.ind2.gear,Gear=="LL"| Gear =="TR"), aes(fill = fishing_pressure)) +
   geom_sf_label(data=filter(zone.ind2.gear,Gear=="LL"| Gear =="TR"), aes(label = zone_id),
                 label.padding = unit(0.25, "lines"),
                 label.r = unit(0, "lines"), label.size = 0.4)+
-  scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Pressure",  #use this to format the scale, set the limits using the range you calculated
+  scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Effort (kg/km^2/yr)",  #use this to format the scale, set the limits using the range you calculated
                        limits=c(0,max(zone.ind2.range.gear[2]))) +
   labs(title = paste0("Trolling and Long Line"), x="Total Landings per sqkm", y=NULL) +
   theme(panel.background = element_rect(fill = "white", colour = "black"),legend.position = "none",
@@ -1243,24 +1321,26 @@ fish.zone.LL.TR <- ggplot() +
 plot(fish.zone.LL.TR)
 
 fish.zone.PT <- ggplot() +
+   geom_sf(data=map.fill, fill="beige")+
   geom_sf(data=filter(zone.ind2.gear,Gear=="PT"), aes( fill = fishing_pressure)) +
   geom_sf_label(data=filter(zone.ind2.gear,Gear=="HL"), aes(label = zone_id),
                 label.padding = unit(0.25, "lines"),
                 label.r = unit(0, "lines"), label.size = 0.4)+
-  scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Pressure",  #use this to format the scale, set the limits using the range you calculated
+  scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Effort (kg/km^2/yr)",  #use this to format the scale, set the limits using the range you calculated
                        na.value="gray",limits=c(0,max(zone.ind2.range.gear[2]))) +
   labs(title = paste0("Pot Traps"), x="Total Landings per sqkm", y=NULL) +  #create the correct labels for the plot
-  theme(panel.background = element_rect(fill = "white", colour = "black"),legend.position="none",
+  theme(panel.background = element_rect(fill = "white", colour = "black") ,
         plot.title = element_text(size=20, face="bold"))
 plot(fish.zone.PT)
 
 fish.zone.NET <- ggplot() +
+   geom_sf(data=map.fill, fill="beige")+
   geom_sf(data=zone.ind.gear, fill="grey")+
   geom_sf(data=filter(zone.ind2.gear,Gear=="NET"), aes( fill = fishing_pressure)) +
   geom_sf_label(data=filter(zone.ind2.gear,Gear=="HL"), aes(label = zone_id),
                 label.padding = unit(0.25, "lines"),
                 label.r = unit(0, "lines"), label.size = 0.4)+
-  scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Pressure",  #use this to format the scale, set the limits using the range you calculated
+  scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Effort (kg/km^2/yr)",  #use this to format the scale, set the limits using the range you calculated
                        na.value="gray",limits=c(0,max(zone.ind2.range.gear[2]))) +
   labs(title = paste0("Beach Seine"), x="Total Landings per sqkm", y=NULL) +  #create the correct labels for the plot
   theme(panel.background = element_rect(fill = "white", colour = "black"),
@@ -1304,7 +1384,7 @@ fish.zone.pottrap.2012 <- ggplot() +
    geom_sf_label(data=filter(zone.ind2.gear.year,Year==2012), aes(label = zone_id),
                  label.padding = unit(0.25, "lines"),
                  label.r = unit(0, "lines"), label.size = 0.4)+
-   scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Pressure",  #use this to format the scale, set the limits using the range you calculated
+   scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Effort (kg/km^2/yr)",  #use this to format the scale, set the limits using the range you calculated
                         na.value="gray",limits=c(0,max(zone.ind2.range.pottrap[2]))) +
    labs(title = paste0("Fishing Effort by Pot Trap for 2012"), x="Total Landings per sqkm", y=NULL) +  #create the correct labels for the plot
    theme(panel.background = element_rect(fill = "white", colour = "black"))
@@ -1316,7 +1396,7 @@ fish.zone.pottrap.2013 <- ggplot() +
    geom_sf_label(data=filter(zone.ind2.gear.year,Year==2013), aes(label = zone_id),
                  label.padding = unit(0.25, "lines"),
                  label.r = unit(0, "lines"), label.size = 0.4)+
-   scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Pressure",  #use this to format the scale, set the limits using the range you calculated
+   scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Effort (kg/km^2/yr)",  #use this to format the scale, set the limits using the range you calculated
                         na.value="gray",limits=c(0,max(zone.ind2.range.pottrap[2]))) +
    labs(title = paste0("Fishing Effort by Pot Trap for 2013"), x="Total Landings per sqkm", y=NULL) +  #create the correct labels for the plot
    theme(panel.background = element_rect(fill = "white", colour = "black"))
@@ -1328,7 +1408,7 @@ fish.zone.pottrap.2014 <- ggplot() +
    geom_sf_label(data=filter(zone.ind2.gear.year,Year==2014), aes(label = zone_id),
                  label.padding = unit(0.25, "lines"),
                  label.r = unit(0, "lines"), label.size = 0.4)+
-   scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Pressure",  #use this to format the scale, set the limits using the range you calculated
+   scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Effort (kg/km^2/yr)",  #use this to format the scale, set the limits using the range you calculated
                         na.value="gray",limits=c(0,max(zone.ind2.range.pottrap[2]))) +
    labs(title = paste0("Fishing Effort by Pot Trap for 2014"), x="Total Landings per sqkm", y=NULL) +  #create the correct labels for the plot
    theme(panel.background = element_rect(fill = "white", colour = "black"))
@@ -1340,7 +1420,7 @@ fish.zone.pottrap.2015 <- ggplot() +
    geom_sf_label(data=filter(zone.ind2.gear.year,Year==2015), aes(label = zone_id),
                  label.padding = unit(0.25, "lines"),
                  label.r = unit(0, "lines"), label.size = 0.4)+
-   scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Pressure",  #use this to format the scale, set the limits using the range you calculated
+   scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Effort (kg/km^2/yr)",  #use this to format the scale, set the limits using the range you calculated
                         na.value="gray",limits=c(0,max(zone.ind2.range.pottrap[2]))) +
    labs(title = paste0("Fishing Effort by Pot Trap for 2015"), x="Total Landings per sqkm", y=NULL) +  #create the correct labels for the plot
    theme(panel.background = element_rect(fill = "white", colour = "black"))
@@ -1352,7 +1432,7 @@ fish.zone.pottrap.2016 <- ggplot() +
    geom_sf_label(data=filter(zone.ind2.gear.year,Year==2016), aes(label = zone_id),
                  label.padding = unit(0.25, "lines"),
                  label.r = unit(0, "lines"), label.size = 0.4)+
-   scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Pressure",  #use this to format the scale, set the limits using the range you calculated
+   scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Effort (kg/km^2/yr)",  #use this to format the scale, set the limits using the range you calculated
                         na.value="gray",limits=c(0,max(zone.ind2.range.pottrap[2]))) +
    labs(title = paste0("Fishing Effort by Pot Trap for 2016"), x="Total Landings per sqkm", y=NULL) +  #create the correct labels for the plot
    theme(panel.background = element_rect(fill = "white", colour = "black"))
@@ -1364,7 +1444,7 @@ fish.zone.pottrap.2017 <- ggplot() +
    geom_sf_label(data=filter(zone.ind2.gear.year,Year==2017), aes(label = zone_id),
                  label.padding = unit(0.25, "lines"),
                  label.r = unit(0, "lines"), label.size = 0.4)+
-   scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Pressure",  #use this to format the scale, set the limits using the range you calculated
+   scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Effort (kg/km^2/yr)",  #use this to format the scale, set the limits using the range you calculated
                         na.value="gray",limits=c(0,max(zone.ind2.range.pottrap[2]))) +
    labs(title = paste0("Fishing Effort by Pot Trap for 2017"), x="Total Landings per sqkm", y=NULL) +  #create the correct labels for the plot
    theme(panel.background = element_rect(fill = "white", colour = "black"))
@@ -1376,7 +1456,7 @@ fish.zone.pottrap.2018 <- ggplot() +
    geom_sf_label(data=filter(zone.ind2.gear.year,Year==2018), aes(label = zone_id),
                  label.padding = unit(0.25, "lines"),
                  label.r = unit(0, "lines"), label.size = 0.4)+
-   scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Pressure",  #use this to format the scale, set the limits using the range you calculated
+   scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Effort (kg/km^2/yr)",  #use this to format the scale, set the limits using the range you calculated
                         na.value="gray",limits=c(0,max(zone.ind2.range.pottrap[2]))) +
    labs(title = paste0("Fishing Effort by Pot Trap for 2018"), x="Total Landings per sqkm", y=NULL) +  #create the correct labels for the plot
    theme(panel.background = element_rect(fill = "white", colour = "black"))
@@ -1404,7 +1484,7 @@ fish.zone.diving.2012 <- ggplot() +
    geom_sf_label(data=filter(zone.ind2.gear.year,Year==2012), aes(label = zone_id),
                  label.padding = unit(0.25, "lines"),
                  label.r = unit(0, "lines"), label.size = 0.4)+
-   scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Pressure",  #use this to format the scale, set the limits using the range you calculated
+   scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Effort (kg/km^2/yr)",  #use this to format the scale, set the limits using the range you calculated
                         na.value="gray",limits=c(0,max(zone.ind2.range.diving[2]))) +
    labs(title = paste0("Fishing Effort by Diving for 2012"), x="Total Landings per sqkm", y=NULL) +  #create the correct labels for the plot
    theme(panel.background = element_rect(fill = "white", colour = "black"))
@@ -1416,7 +1496,7 @@ fish.zone.diving.2013 <- ggplot() +
    geom_sf_label(data=filter(zone.ind2.gear.year,Year==2013), aes(label = zone_id),
                  label.padding = unit(0.25, "lines"),
                  label.r = unit(0, "lines"), label.size = 0.4)+
-   scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Pressure",  #use this to format the scale, set the limits using the range you calculated
+   scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Effort (kg/km^2/yr)",  #use this to format the scale, set the limits using the range you calculated
                         na.value="gray",limits=c(0,max(zone.ind2.range.diving[2]))) +
    labs(title = paste0("Fishing Effort by Diving for 2013"), x="Total Landings per sqkm", y=NULL) +  #create the correct labels for the plot
    theme(panel.background = element_rect(fill = "white", colour = "black"))
@@ -1428,7 +1508,7 @@ fish.zone.diving.2014 <- ggplot() +
    geom_sf_label(data=filter(zone.ind2.gear.year,Year==2014), aes(label = zone_id),
                  label.padding = unit(0.25, "lines"),
                  label.r = unit(0, "lines"), label.size = 0.4)+
-   scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Pressure",  #use this to format the scale, set the limits using the range you calculated
+   scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Effort (kg/km^2/yr)",  #use this to format the scale, set the limits using the range you calculated
                         na.value="gray",limits=c(0,max(zone.ind2.range.diving[2]))) +
    labs(title = paste0("Fishing Effort by Diving for 2014"), x="Total Landings per sqkm", y=NULL) +  #create the correct labels for the plot
    theme(panel.background = element_rect(fill = "white", colour = "black"))
@@ -1440,7 +1520,7 @@ fish.zone.diving.2015 <- ggplot() +
    geom_sf_label(data=filter(zone.ind2.gear.year,Year==2015), aes(label = zone_id),
                  label.padding = unit(0.25, "lines"),
                  label.r = unit(0, "lines"), label.size = 0.4)+
-   scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Pressure",  #use this to format the scale, set the limits using the range you calculated
+   scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Effort (kg/km^2/yr)",  #use this to format the scale, set the limits using the range you calculated
                         na.value="gray",limits=c(0,max(zone.ind2.range.diving[2]))) +
    labs(title = paste0("Fishing Effort by Diving for 2015"), x="Total Landings per sqkm", y=NULL) +  #create the correct labels for the plot
    theme(panel.background = element_rect(fill = "white", colour = "black"))
@@ -1452,7 +1532,7 @@ fish.zone.diving.2016 <- ggplot() +
    geom_sf_label(data=filter(zone.ind2.gear.year,Year==2016), aes(label = zone_id),
                  label.padding = unit(0.25, "lines"),
                  label.r = unit(0, "lines"), label.size = 0.4)+
-   scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Pressure",  #use this to format the scale, set the limits using the range you calculated
+   scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Effort (kg/km^2/yr)",  #use this to format the scale, set the limits using the range you calculated
                         na.value="gray",limits=c(0,max(zone.ind2.range.diving[2]))) +
    labs(title = paste0("Fishing Effort by Diving for 2016"), x="Total Landings per sqkm", y=NULL) +  #create the correct labels for the plot
    theme(panel.background = element_rect(fill = "white", colour = "black"))
@@ -1464,7 +1544,7 @@ fish.zone.diving.2017 <- ggplot() +
    geom_sf_label(data=filter(zone.ind2.gear.year,Year==2017), aes(label = zone_id),
                  label.padding = unit(0.25, "lines"),
                  label.r = unit(0, "lines"), label.size = 0.4)+
-   scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Pressure",  #use this to format the scale, set the limits using the range you calculated
+   scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Effort (kg/km^2/yr)",  #use this to format the scale, set the limits using the range you calculated
                         na.value="gray",limits=c(0,max(zone.ind2.range.diving[2]))) +
    labs(title = paste0("Fishing Effort by Diving for 2017"), x="Total Landings per sqkm", y=NULL) +  #create the correct labels for the plot
    theme(panel.background = element_rect(fill = "white", colour = "black"))
@@ -1476,7 +1556,7 @@ fish.zone.diving.2018 <- ggplot() +
    geom_sf_label(data=filter(zone.ind2.gear.year,Year==2018), aes(label = zone_id),
                  label.padding = unit(0.25, "lines"),
                  label.r = unit(0, "lines"), label.size = 0.4)+
-   scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Pressure",  #use this to format the scale, set the limits using the range you calculated
+   scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Effort (kg/km^2/yr)",  #use this to format the scale, set the limits using the range you calculated
                         na.value="gray",limits=c(0,max(zone.ind2.range.diving[2]))) +
    labs(title = paste0("Fishing Effort by Diving for 2018"), x="Total Landings per sqkm", y=NULL) +  #create the correct labels for the plot
    theme(panel.background = element_rect(fill = "white", colour = "black"))
@@ -1504,7 +1584,7 @@ fish.zone.trolling.2012 <- ggplot() +
    geom_sf_label(data=filter(zone.ind2.gear.year,Year==2012), aes(label = zone_id),
                  label.padding = unit(0.25, "lines"),
                  label.r = unit(0, "lines"), label.size = 0.4)+
-   scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Pressure",  #use this to format the scale, set the limits using the range you calculated
+   scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Effort (kg/km^2/yr)",  #use this to format the scale, set the limits using the range you calculated
                         na.value="gray",limits=c(0,max(zone.ind2.range.trolling[2]))) +
    labs(title = paste0("Fishing Effort by Trolling for 2012"), x="Total Landings per sqkm", y=NULL) +  #create the correct labels for the plot
    theme(panel.background = element_rect(fill = "white", colour = "black"))
@@ -1516,7 +1596,7 @@ fish.zone.trolling.2013 <- ggplot() +
    geom_sf_label(data=filter(zone.ind2.gear.year,Year==2013), aes(label = zone_id),
                  label.padding = unit(0.25, "lines"),
                  label.r = unit(0, "lines"), label.size = 0.4)+
-   scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Pressure",  #use this to format the scale, set the limits using the range you calculated
+   scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Effort (kg/km^2/yr)",  #use this to format the scale, set the limits using the range you calculated
                         na.value="gray",limits=c(0,max(zone.ind2.range.trolling[2]))) +
    labs(title = paste0("Fishing Effort by Trolling for 2013"), x="Total Landings per sqkm", y=NULL) +  #create the correct labels for the plot
    theme(panel.background = element_rect(fill = "white", colour = "black"))
@@ -1528,7 +1608,7 @@ fish.zone.trolling.2014 <- ggplot() +
    geom_sf_label(data=filter(zone.ind2.gear.year,Year==2014), aes(label = zone_id),
                  label.padding = unit(0.25, "lines"),
                  label.r = unit(0, "lines"), label.size = 0.4)+
-   scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Pressure",  #use this to format the scale, set the limits using the range you calculated
+   scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Effort (kg/km^2/yr)",  #use this to format the scale, set the limits using the range you calculated
                         na.value="gray",limits=c(0,max(zone.ind2.range.trolling[2]))) +
    labs(title = paste0("Fishing Effort by Trolling for 2014"), x="Total Landings per sqkm", y=NULL) +  #create the correct labels for the plot
    theme(panel.background = element_rect(fill = "white", colour = "black"))
@@ -1540,7 +1620,7 @@ fish.zone.trolling.2015 <- ggplot() +
    geom_sf_label(data=filter(zone.ind2.gear.year,Year==2015), aes(label = zone_id),
                  label.padding = unit(0.25, "lines"),
                  label.r = unit(0, "lines"), label.size = 0.4)+
-   scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Pressure",  #use this to format the scale, set the limits using the range you calculated
+   scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Effort (kg/km^2/yr)",  #use this to format the scale, set the limits using the range you calculated
                         na.value="gray",limits=c(0,max(zone.ind2.range.trolling[2]))) +
    labs(title = paste0("Fishing Effort by Trolling for 2015"), x="Total Landings per sqkm", y=NULL) +  #create the correct labels for the plot
    theme(panel.background = element_rect(fill = "white", colour = "black"))
@@ -1552,7 +1632,7 @@ fish.zone.trolling.2016 <- ggplot() +
    geom_sf_label(data=filter(zone.ind2.gear.year,Year==2016), aes(label = zone_id),
                  label.padding = unit(0.25, "lines"),
                  label.r = unit(0, "lines"), label.size = 0.4)+
-   scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Pressure",  #use this to format the scale, set the limits using the range you calculated
+   scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Effort (kg/km^2/yr)",  #use this to format the scale, set the limits using the range you calculated
                         na.value="gray",limits=c(0,max(zone.ind2.range.trolling[2]))) +
    labs(title = paste0("Fishing Effort by Trolling for 2016"), x="Total Landings per sqkm", y=NULL) +  #create the correct labels for the plot
    theme(panel.background = element_rect(fill = "white", colour = "black"))
@@ -1564,7 +1644,7 @@ fish.zone.trolling.2017 <- ggplot() +
    geom_sf_label(data=filter(zone.ind2.gear.year,Year==2017), aes(label = zone_id),
                  label.padding = unit(0.25, "lines"),
                  label.r = unit(0, "lines"), label.size = 0.4)+
-   scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Pressure",  #use this to format the scale, set the limits using the range you calculated
+   scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Effort (kg/km^2/yr)",  #use this to format the scale, set the limits using the range you calculated
                         na.value="gray",limits=c(0,max(zone.ind2.range.trolling[2]))) +
    labs(title = paste0("Fishing Effort by Trolling for 2017"), x="Total Landings per sqkm", y=NULL) +  #create the correct labels for the plot
    theme(panel.background = element_rect(fill = "white", colour = "black"))
@@ -1576,7 +1656,7 @@ fish.zone.trolling.2018 <- ggplot() +
    geom_sf_label(data=filter(zone.ind2.gear.year,Year==2018), aes(label = zone_id),
                  label.padding = unit(0.25, "lines"),
                  label.r = unit(0, "lines"), label.size = 0.4)+
-   scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Pressure",  #use this to format the scale, set the limits using the range you calculated
+   scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Effort (kg/km^2/yr)",  #use this to format the scale, set the limits using the range you calculated
                         na.value="gray",limits=c(0,max(zone.ind2.range.trolling[2]))) +
    labs(title = paste0("Fishing Effort by Trolling for 2018"), x="Total Landings per sqkm", y=NULL) +  #create the correct labels for the plot
    theme(panel.background = element_rect(fill = "white", colour = "black"))
@@ -1604,7 +1684,7 @@ fish.zone.handline.2012 <- ggplot() +
    geom_sf_label(data=filter(zone.ind2.gear.year,Year==2012), aes(label = zone_id),
                  label.padding = unit(0.25, "lines"),
                  label.r = unit(0, "lines"), label.size = 0.4)+
-   scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Pressure",  #use this to format the scale, set the limits using the range you calculated
+   scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Effort (kg/km^2/yr)",  #use this to format the scale, set the limits using the range you calculated
                         na.value="gray",limits=c(0,max(zone.ind2.range.handline[2]))) +
    labs(title = paste0("Fishing Effort by Handline for 2012"), x="Total Landings per sqkm", y=NULL) +  #create the correct labels for the plot
    theme(panel.background = element_rect(fill = "white", colour = "black"))
@@ -1616,7 +1696,7 @@ fish.zone.handline.2013 <- ggplot() +
    geom_sf_label(data=filter(zone.ind2.gear.year,Year==2013), aes(label = zone_id),
                  label.padding = unit(0.25, "lines"),
                  label.r = unit(0, "lines"), label.size = 0.4)+
-   scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Pressure",  #use this to format the scale, set the limits using the range you calculated
+   scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Effort (kg/km^2/yr)",  #use this to format the scale, set the limits using the range you calculated
                         na.value="gray",limits=c(0,max(zone.ind2.range.handline[2]))) +
    labs(title = paste0("Fishing Effort by Handline for 2013"), x="Total Landings per sqkm", y=NULL) +  #create the correct labels for the plot
    theme(panel.background = element_rect(fill = "white", colour = "black"))
@@ -1628,7 +1708,7 @@ fish.zone.handline.2014 <- ggplot() +
    geom_sf_label(data=filter(zone.ind2.gear.year,Year==2014), aes(label = zone_id),
                  label.padding = unit(0.25, "lines"),
                  label.r = unit(0, "lines"), label.size = 0.4)+
-   scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Pressure",  #use this to format the scale, set the limits using the range you calculated
+   scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Effort (kg/km^2/yr)",  #use this to format the scale, set the limits using the range you calculated
                         na.value="gray",limits=c(0,max(zone.ind2.range.handline[2]))) +
    labs(title = paste0("Fishing Effort by Handline for 2014"), x="Total Landings per sqkm", y=NULL) +  #create the correct labels for the plot
    theme(panel.background = element_rect(fill = "white", colour = "black"))
@@ -1640,7 +1720,7 @@ fish.zone.handline.2015 <- ggplot() +
    geom_sf_label(data=filter(zone.ind2.gear.year,Year==2015), aes(label = zone_id),
                  label.padding = unit(0.25, "lines"),
                  label.r = unit(0, "lines"), label.size = 0.4)+
-   scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Pressure",  #use this to format the scale, set the limits using the range you calculated
+   scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Effort (kg/km^2/yr)",  #use this to format the scale, set the limits using the range you calculated
                         na.value="gray",limits=c(0,max(zone.ind2.range.handline[2]))) +
    labs(title = paste0("Fishing Effort by Handline for 2015"), x="Total Landings per sqkm", y=NULL) +  #create the correct labels for the plot
    theme(panel.background = element_rect(fill = "white", colour = "black"))
@@ -1652,7 +1732,7 @@ fish.zone.handline.2016 <- ggplot() +
    geom_sf_label(data=filter(zone.ind2.gear.year,Year==2016), aes(label = zone_id),
                  label.padding = unit(0.25, "lines"),
                  label.r = unit(0, "lines"), label.size = 0.4)+
-   scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Pressure",  #use this to format the scale, set the limits using the range you calculated
+   scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Effort (kg/km^2/yr)",  #use this to format the scale, set the limits using the range you calculated
                         na.value="gray",limits=c(0,max(zone.ind2.range.handline[2]))) +
    labs(title = paste0("Fishing Effort by Handline for 2016"), x="Total Landings per sqkm", y=NULL) +  #create the correct labels for the plot
    theme(panel.background = element_rect(fill = "white", colour = "black"))
@@ -1664,7 +1744,7 @@ fish.zone.handline.2017 <- ggplot() +
    geom_sf_label(data=filter(zone.ind2.gear.year,Year==2017), aes(label = zone_id),
                  label.padding = unit(0.25, "lines"),
                  label.r = unit(0, "lines"), label.size = 0.4)+
-   scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Pressure",  #use this to format the scale, set the limits using the range you calculated
+   scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Effort (kg/km^2/yr)",  #use this to format the scale, set the limits using the range you calculated
                         na.value="gray",limits=c(0,max(zone.ind2.range.handline[2]))) +
    labs(title = paste0("Fishing Effort by Handline for 2017"), x="Total Landings per sqkm", y=NULL) +  #create the correct labels for the plot
    theme(panel.background = element_rect(fill = "white", colour = "black"))
@@ -1676,7 +1756,7 @@ fish.zone.handline.2018 <- ggplot() +
    geom_sf_label(data=filter(zone.ind2.gear.year,Year==2018), aes(label = zone_id),
                  label.padding = unit(0.25, "lines"),
                  label.r = unit(0, "lines"), label.size = 0.4)+
-   scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Pressure",  #use this to format the scale, set the limits using the range you calculated
+   scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Effort (kg/km^2/yr)",  #use this to format the scale, set the limits using the range you calculated
                         na.value="gray",limits=c(0,max(zone.ind2.range.handline[2]))) +
    labs(title = paste0("Fishing Effort by Handline for 2018"), x="Total Landings per sqkm", y=NULL) +  #create the correct labels for the plot
    theme(panel.background = element_rect(fill = "white", colour = "black"))
@@ -2175,78 +2255,86 @@ zone.ind.inpark.range.fish #check to make sure it worked
 
 # Plot fishing pressure maps
 fish.inpark.2012 <- ggplot() +    #enable the ggplot layer 
+   geom_sf(data=map.fill, fill="beige")+
   geom_sf(data=zone.clip, fill="grey")+
   geom_sf(data=filter(zone.ind2.inpark,Year==2012), aes(fill = fishing_pressure)) +  #use the geom_sf to plot spatially
   geom_sf_label(data=filter(zone.ind2.inpark,Year==2016), aes(label = zone_id),
                 label.padding = unit(0.25, "lines"),
                 label.r = unit(0, "lines"), label.size = 0.4)+
-  scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Pressure",  #use this to format the scale, set the limits using the range you calculated
+  scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Effort (kg/km^2/yr)",  #use this to format the scale, set the limits using the range you calculated
                        na.value="gray",limits=c(0,max(zone.ind.inpark.range.fish[2]))) +
   labs( x="Total Landings per sqkm", y=NULL) +  #create the correct labels for the plot
-  theme(panel.background = element_rect(fill = "white", colour = "black"), legend.position = "none")  #set the theme of the plot to blue and white 
+  theme(panel.background = element_rect(fill = "white", colour = "black") )  #set the theme of the plot to blue and white 
 fish.inpark.2013 <- ggplot() +
+   geom_sf(data=map.fill, fill="beige")+
   geom_sf(data=filter(zone.ind2.inpark,Year==2013), aes(fill = fishing_pressure)) +
   geom_sf_label(data=filter(zone.ind2.inpark,Year==2016), aes(label = zone_id),
                 label.padding = unit(0.25, "lines"),
                 label.r = unit(0, "lines"), label.size = 0.4)+
-  scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Pressure",
+  scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Effort (kg/km^2/yr)",
                        na.value="gray",limits=c(0,max(zone.ind.inpark.range.fish[2]))) +
   labs( x="Total Landings per sqkm", y=NULL) +
-  theme(panel.background = element_rect(fill = "white", colour = "black"), legend.position = "none") 
+  theme(panel.background = element_rect(fill = "white", colour = "black") ) 
 fish.inpark.2014 <- ggplot() +
+   geom_sf(data=map.fill, fill="beige")+
   geom_sf(data=zone.clip, fill="grey")+
   geom_sf(data=filter(zone.ind2.inpark,Year==2014), aes(fill = fishing_pressure)) +
   geom_sf_label(data=filter(zone.ind2.inpark,Year==2016), aes(label = zone_id),
                 label.padding = unit(0.25, "lines"),
                 label.r = unit(0, "lines"), label.size = 0.4)+
-  scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Pressure",
+  scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Effort (kg/km^2/yr)",
                        na.value="gray",limits=c(0,max(zone.ind.inpark.range.fish[2]))) +
   labs( x="Total Landings per sqkm", y=NULL) +
-  theme(panel.background = element_rect(fill = "white", colour = "black"), legend.position = "none")
+  theme(panel.background = element_rect(fill = "white", colour = "black") )
 fish.inpark.2015 <- ggplot() +
+   geom_sf(data=map.fill, fill="beige")+
   geom_sf(data=zone.clip, fill="grey")+
   geom_sf(data=filter(zone.ind2.inpark,Year==2015), aes(fill = fishing_pressure)) +
   geom_sf_label(data=filter(zone.ind2.inpark,Year==2016), aes(label = zone_id),
                 label.padding = unit(0.25, "lines"),
                 label.r = unit(0, "lines"), label.size = 0.4)+
-  scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Pressure",
+  scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Effort (kg/km^2/yr)",
                        na.value="gray",limits=c(0,max(zone.ind.inpark.range.fish[2]))) +
   labs( x="Total Landings per sqkm", y=NULL) +
-  theme(panel.background = element_rect(fill = "white", colour = "black"), legend.position = "none")
+  theme(panel.background = element_rect(fill = "white", colour = "black") )
 fish.inpark.2016 <- ggplot() +
+   geom_sf(data=map.fill, fill="beige")+
   geom_sf(data=filter(zone.ind2.inpark,Year==2016), aes(fill = fishing_pressure)) +
   geom_sf_label(data=filter(zone.ind2.inpark,Year==2016), aes(label = zone_id),
                 label.padding = unit(0.25, "lines"),
                 label.r = unit(0, "lines"), label.size = 0.4)+
-  scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Pressure",
+  scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Effort (kg/km^2/yr)",
                        na.value="gray",limits=c(0,max(zone.ind.inpark.range.fish[2]))) +
   labs( x="Total Landings per sqkm", y=NULL) +
   theme(panel.background = element_rect(fill = "white", colour = "black"))
 fish.inpark.2017 <- ggplot() +
+   geom_sf(data=map.fill, fill="beige")+
   geom_sf(data=filter(zone.ind2.inpark,Year==2017), aes(fill = fishing_pressure)) +
   geom_sf_label(data=filter(zone.ind2.inpark,Year==2016), aes(label = zone_id),
                 label.padding = unit(0.25, "lines"),
                 label.r = unit(0, "lines"), label.size = 0.4)+
-  scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Pressure",
+  scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Effort (kg/km^2/yr)",
                        na.value="gray",limits=c(0,max(zone.ind.inpark.range.fish[2]))) +
   labs( x="Total Landings per sqkm", y=NULL) +
-  theme(panel.background = element_rect(fill = "white", colour = "black"), legend.position = "none")
+  theme(panel.background = element_rect(fill = "white", colour = "black") )
 fish.inpark.2018 <- ggplot() +
+   geom_sf(data=map.fill, fill="beige")+
   geom_sf(data=zone.clip, fill="grey")+
   geom_sf(data=filter(zone.ind2.inpark,Year==2018), aes(fill = fishing_pressure)) +
   geom_sf_label(data=filter(zone.ind2.inpark,Year==2016), aes(label = zone_id),
                 label.padding = unit(0.25, "lines"),
                 label.r = unit(0, "lines"), label.size = 0.4)+
-  scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Pressure",
+  scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Effort (kg/km^2/yr)",
                        na.value="gray",limits=c(0,max(zone.ind.inpark.range.fish[2]))) +
   labs( x="Total Landings per sqkm", y=NULL) +
-  theme(panel.background = element_rect(fill = "white", colour = "black"), legend.position = "none")
+  theme(panel.background = element_rect(fill = "white", colour = "black") )
 fish.inpark.2019 <- ggplot() +
+   geom_sf(data=map.fill, fill="beige")+
   geom_sf(data=filter(zone.ind2.inpark,Year==2019), aes(fill = fishing_pressure)) +
   geom_sf_label(data=filter(zone.ind2.inpark,Year==2016), aes(label = zone_id),
                 label.padding = unit(0.25, "lines"),
                 label.r = unit(0, "lines"), label.size = 0.4)+
-  scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Pressure",
+  scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Effort (kg/km^2/yr)",
                        na.value="gray",limits=c(0,max(zone.ind.inpark.range.fish[2]))) +
   labs(title = paste0("Fishing Effort in the Marine Park for 2019"), x="Total Landings per sqkm", y=NULL) +
   theme(panel.background = element_rect(fill = "white", colour = "black"))
