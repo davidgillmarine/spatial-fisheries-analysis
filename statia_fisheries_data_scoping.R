@@ -71,6 +71,16 @@ fish.weight.year <- log.data %>%   # looking at the amount of fish caught per ye
 head(fish.weight.year)
 write_excel_csv(fish.weight.year, "Final_Figures_Tables/yearly_fishing_effort.xlxs")
 
+fish.weight.inpark.year <- log.data %>%   # looking at the amount of fish caught per year
+   filter(Landings=="Fish") %>%     # sort the data just by fish
+   group_by(Year)%>%      #group by the relevent groups
+   filter(in.park==1)%>%
+   summarize(fish_weight = sum(`Weight_(kg)`, na.rm=TRUE),
+             n_distinct(Trip_ID))%>%   #summerize by these groups by unique Trip_ID and remove NAs
+   mutate(Fishing_Effort=fish_weight/27.5)
+head(fish.weight.inpark.year)
+write_excel_csv(fish.weight.inpark.year, "Final_Figures_Tables/yearly_fishing_effort_inpark.xlxs")
+
 fish.weight.month <- log.data %>%     # looking at the amount of fish caught per year
   filter(Landings=="Fish") %>%         
   group_by(Year, Month)%>%  
@@ -486,7 +496,7 @@ prop.fam.weight <- fish.species %>%
 head(prop.fam.weight)
 sum(prop.fam.weight$pie.filter, na.rm=T)
 
-#bar plot showing the percent composition of fish per trip with a mutiplier 
+#bar plot showing the percent composition of fish per trip 
 prop.fam.weight%>%
    mutate(Family = fct_reorder(family, pie.prop)) %>%
    filter(pie.prop>.1)%>%
@@ -693,14 +703,19 @@ gis.dir <- "/Users/gcullinan//OneDrive - Duke University/MP Project/spatial-fish
                  label.r = unit(0, "lines"), label.size = 0.4)+
    scale_fill_gradient(low="#f7fbff",high="#2171b5",name="Fishing Effort (kg/km^2/yr)",  #use this to format the scale, set the limits using the range you calculated
                         na.value="gray",limits=c(0,max(zone.ind.range.fish[2]))) +
-   labs(x="Total Landings per sqkm", y=NULL) +  #create the correct labels for the plot
+   labs(title=paste0("Fishing Effort for 2012 "),x=NULL, y=NULL) +  #create the correct labels for the plot
    theme(panel.background = element_rect(fill = "white", colour = "black"),
+         plot.title = element_text(size=30, face="bold"),
          legend.text = element_text(size = 16),
          legend.title = element_text(size=20, face = "bold"),
-         legend.key.size = unit(1, "inches"),
+         legend.position = "bottom",
+         legend.key.size = unit(.5, "inches"),
+
          axis.text.x = element_text(size=12),
          axis.text.y = element_text(size=12),
          axis.title.x = element_text(size=15, face="bold"))  #set the theme of the plot to blue and white 
+ plot(fish.zone.2012)
+ 
  fish.zone.2013 <- ggplot() +
    geom_sf(data=map.fill, fill="beige")+ 
    geom_sf(data=filter(zone.ind2,Year==2013), aes(fill = fishing_pressure)) +
@@ -2041,11 +2056,15 @@ fishing_years_gears_sum+
          axis.text.y = element_text(size=20),
          axis.title.x = element_text(size=25, face="bold"),
          axis.title.y = element_text(size=25, face="bold"),
-         plot.title = element_text(size=30, face="bold"))+
-   scale_fill_manual(values=c("yellowgreen","DARKOLIVEGREEN","MEDIUMSEAGREEN","DARKGREEN","DARKSEAGREEN"))+
+         plot.title = element_text(size=30, face="bold"),
+         legend.title = element_text(size=20, face = "bold"),
+         legend.text = element_text(size=15),
+         legend.key.size = unit(.5, "inches"))+
+   scale_fill_manual(values=c("yellowgreen","DARKOLIVEGREEN","MEDIUMSEAGREEN","DARKGREEN","DARKSEAGREEN"),
+                     labels=c("DL.HL", "BS", "PT", "SD.FD","TR.LL"))+
    scale_x_continuous(breaks = seq(2012,2018 , by = 1))+
    labs(x="Year", y="Total Weight (kg)")+
-   ggtitle("Total Weight of Fish Caught per Gear per Year From 2012-2018")
+   ggtitle("Total Weight of Fish Landings per Gear From 2012-2018")
 ggsave("Fish_Year_Gear_Totals_2012-2018.png", path="Final_Figures_Tables/", width=14, height=9, units=c("in"))
 
 #looking at lobsters monthly to see if there is seasonality
