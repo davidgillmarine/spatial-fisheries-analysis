@@ -503,16 +503,16 @@ prop.fam.weight%>%
    filter(pie.prop>.1)%>%
    ggplot( aes(x=Family, y=pie.prop, label=sprintf("%0.2f", round(pie.prop, digits = 2)))) +
    geom_bar(stat="identity", fill="DARKGREEN") +
-   geom_text(size = 4, hjust = -.2)+
+   geom_text(size = 6, hjust = -.125)+
    coord_flip() +
    theme(axis.text.x = element_text(size=20),
       axis.text.y = element_text(size=20),
       axis.title.x = element_text(size=30, face="bold"),
       axis.title.y = element_text(size=30, face="bold"),
-      plot.title = element_text(size=30, face="bold"))+
+      plot.title = element_text(size=35, face="bold"))+
    labs(title="Barplot Showing Relative % Catch Per Trip by Family",
         x="Family", y="Relative % Catch Per Trip")
-ggsave("Relative_Pct_Catch_2012-2018.png", path="Final_Figures_Tables/",width=14, height=9, units=c("in"))
+ggsave("Relative_Pct_Catch_2012-2018.png", path="Final_Figures_Tables/",scale=1.25,width=14, height=9, units=c("in"))
 
 #bar plot showing the mean percent catch composition of fish, however this does not seem as accurate as the 
 #above plot because there are some cases where it is the majority of the catch but only part of the time
@@ -2061,7 +2061,7 @@ fishing_years_gears_sum_plot<-ggplot(fish.years.gears.sum, mapping = aes(x=Year,
                                                                 label=sprintf("%0.2f", round(weight.total, digits = 2))))
 fishing_years_gears_sum_plot+
    geom_bar(stat="identity")+ylim(0,4000)+
-   geom_text(size = 4, position = position_stack(vjust = 0.5))+
+   geom_text(size = 3.5, position = position_stack(vjust = 0.5))+
    #geom_text(size = 3, hjust = 0.5, vjust = 1.5, position =     "stack")+
    #geom_text(hjust = 0.5, vjust = 3, position =     "stack")+
    theme(axis.text.x = element_text(size=20),
@@ -2077,7 +2077,7 @@ fishing_years_gears_sum_plot+
    scale_x_continuous(breaks = seq(2012,2018 , by = 1))+
    labs(x="Year", y="Total Weight (kg)")+
    ggtitle("Total Weight of Fish Landings per Gear From 2012-2018")
-ggsave("Fish_Year_Gear_Totals_2012-2018.png", path="Final_Figures_Tables/", width=14, height=9, units=c("in"))
+ggsave("Fish_Year_Gear_Totals_2012-2018.png", path="Final_Figures_Tables/",width=14, height=9, units=c("in"))
 
 #looking at lobsters monthly to see if there is seasonality
 lob.months.season <- zones.lob %>% 
