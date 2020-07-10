@@ -1,23 +1,28 @@
-library(sf)  #importing the correct library packages
-library(rio)
-install_formats()
-library(ggplot2)
-library(cowplot)
-library(tidyverse)
-library(gridExtra)
-library("RColorBrewer")
-library(forcats)
-library(ggpubr)
-library(gridExtra)
+install.packages('pacman')
+pacman::p_load(sf,rio,ggpubr,tidyverse)
+source("fisheries_summary_functions.R")
+
+# library(sf)  #importing the correct library packages
+# library(rio)
+# install_formats()
+# library(ggplot2)
+# library(cowplot)
+# library(tidyverse)
+# library(gridExtra)
+# library("RColorBrewer")
+# library(forcats)
+# library(ggpubr)
+# library(gridExtra)
 
 
 ###################################### Import the Data ##############################
-input.dir <- '~/OneDrive - Duke University/MP Project/spatial-fisheries-analysis/Data/' #set the import directory
-#input.dir <- 'R:/Gill/spatial-fisheries-analysis/tables/raw/' #set the import directory
+#input.dir <- '~/OneDrive - Duke University/MP Project/spatial-fisheries-analysis/Data/' #set the import directory
+input.dir <- 'R:/Gill/research/spatial-fisheries-analysis/tables/raw/' #set the import directory
 log.data.total <- import(paste0(input.dir,"Statia logbook Raw data last update Feb 8 2019.xlsx"), #import the correct file and the page of the fisheries 
                    which = 1, skip =1)                                                            #spreadsheet and tell it where to start from the top
 
 ########################### select only the columns we are interested in and remove spaces ############
+# perhaps consider all lowercase/CamelCase with . or _ between words, no special characters
 log.data <- select(log.data.total,Rec_ID:"No catch") #between Rec_ID and "No Catch are our interesting columns #rename the original data for analysis
 names(log.data)    #check the names 
 names(log.data) <- gsub(" ","_",names(log.data)) #get rid of the names between spaces
@@ -33,41 +38,50 @@ log.data$Gear <- ifelse(log.data$Gear=="pt","PT",log.data$Gear) # edit the gear 
 unique(log.data$Gear) #check
 
 unique(log.data$Landings) #check
+# log.data <- log.data %>% 
+#    mutate(Landings=tolower(Landings))  # option to simplify landings by changing all to lower case 
 log.data$Landings <- ifelse(log.data$Landings %in% c("Fish","fish","FIsh"), "Fish",log.data$Landings) # edit for Fish
 log.data$Landings <- ifelse(log.data$Landings %in% c("Queen Conch","Conch","conch"), "Queen Conch",log.data$Landings) # edit for Conch
 log.data$Landings <- ifelse(log.data$Landings %in% c("Whelk","Whelks"), "Whelk",log.data$Landings) # edit for Whelk
 unique(log.data$Landings) #check
 
+#
 log.data <- log.data %>% 
   mutate(Num_ind=as.numeric(Num_ind),
          Trip_ID=as.character(Trip_ID),
-         `Weight_(kg)`=`Weight_(Lbs)`/2.2,
-         in.park=ifelse(`max_(m)`<=30, 1,0)) 
+         weight.kg=`Weight_(Lbs)`/2.2,
+         in.park=ifelse(`max_(m)`<=30, 1,0),
+         n.zones=rowSums(!is.na(select(., Z1:Z6))), # get # of zones fished 
+         weight.per.zone=weight.kg/n.zones,
+         ind.per.zone=Num_ind/n.zones) 
+
+fishing.area.sqkm <- 64.89144 # km2
+park.area.sqkm <- 27.5 # km2
   
 #################### Breaking out the data by year, and month, and by gear. And by fish, lobster and conch #############
-trips.year <- log.data %>%    # looking at the number of trips per year 
+log.data <- log.data %>% 
   group_by(Year) %>%           #group by the relevent groups
-  summarize(n_distinct(Trip_ID))   #summerize by these groups by unique Trip_ID
-  
-trips.month <- log.data %>%       #looking at the number of trips per month for each year
+  mutate(trips.year=n_distinct(Trip_ID)) %>%    #summerize by these groups by unique Trip_ID
   group_by(Year, Month) %>%         
-  summarize(n_distinct(Trip_ID))     
-
-gear.trips.year <- log.data %>%    #looking at the types of gear used, and the number used per year
+  mutate(trips.month=n_distinct(Trip_ID)) %>%      
   group_by(Year, Gear) %>%         
-  summarize(n_distinct(Trip_ID))   
-
-gear.trips.month <- log.data %>%   #looking at the types of gear used, and the amount used per month
+  mutate(gear.trips.year =n_distinct(Trip_ID)) %>% 
   group_by(Year, Month, Gear) %>%   
-  summarize(n_distinct(Trip_ID))    
+  mutate(gear.trips.month=n_distinct(Trip_ID)) %>% 
+   ungroup()
 
 ####################### looking at how much fish was caught and by what type of gear ################
+# Example
+my_landings(log.data,"Fish",weight.kg,Year,Month,Gear)
+my_landings(log.data,"Spiny Lobster",ind.per.zone,Year,zone_id)
+
+
 fish.weight.year <- log.data %>%   # looking at the amount of fish caught per year
   filter(Landings=="Fish") %>%     # sort the data just by fish
   group_by(Year)%>%      #group by the relevent groups
-  summarize(fish_weight = sum(`Weight_(kg)`, na.rm=TRUE),
-            n_distinct(Trip_ID))%>%   #summerize by these groups by unique Trip_ID and remove NAs
-   mutate(Fishing_Effort=fish_weight/64.89144)
+  summarize(fish_weight = sum(weight.kg, na.rm=TRUE),
+            n_trips=n_distinct(Trip_ID))%>%   #summerize by these groups by unique Trip_ID and remove NAs
+   mutate(fish_intensity_sqkm=fish_weight/fishing.area.sqkm)
 head(fish.weight.year)
 write_excel_csv(fish.weight.year, "Final_Figures_Tables/yearly_fishing_effort.xlxs")
 
@@ -75,36 +89,36 @@ fish.weight.inpark.year <- log.data %>%   # looking at the amount of fish caught
    filter(Landings=="Fish") %>%     # sort the data just by fish
    group_by(Year)%>%      #group by the relevent groups
    filter(in.park==1)%>%
-   summarize(fish_weight = sum(`Weight_(kg)`, na.rm=TRUE),
-             n_distinct(Trip_ID))%>%   #summerize by these groups by unique Trip_ID and remove NAs
-   mutate(Fishing_Effort=fish_weight/27.5)
+   summarize(fish_weight = sum(weight.kg, na.rm=TRUE),
+             n_trips=n_distinct(Trip_ID))%>%   #summerize by these groups by unique Trip_ID and remove NAs
+   mutate(Fishing_Effort=fish_weight/park.area.sqkm)
 head(fish.weight.inpark.year)
 write_excel_csv(fish.weight.inpark.year, "Final_Figures_Tables/yearly_fishing_effort_inpark.xlxs")
 
 fish.weight.month <- log.data %>%     # looking at the amount of fish caught per year
   filter(Landings=="Fish") %>%         
   group_by(Year, Month)%>%  
-  summarize(fish_weight = sum(`Weight_(kg)`, na.rm=TRUE))  
+  summarize(fish_weight = sum(weight.kg, na.rm=TRUE))  
 
 fish.gear<- log.data %>%       # looking at the amount of fish caught per gear
   filter(Landings =="Fish") %>%
   group_by(Gear) %>%
-  summarize(fish_weight = sum(`Weight_(kg)`, na.rm=TRUE))
+  summarize(fish_weight = sum(weight.kg, na.rm=TRUE))
 
 fish.gear.year <- log.data %>%      # looking at the amount of fish caught per gear per year
   filter(Landings =="Fish") %>%
   group_by(Year, Gear) %>%
-  summarize(fish_weight = sum(`Weight_(kg)`, na.rm=TRUE))
+  summarize(fish_weight = sum(weight.kg, na.rm=TRUE))
 
 fish.gear.month <- log.data %>%      # looking at the amount of fish caught per gear per month
   group_by(Year, Month, Landings, Gear) %>%
   filter(Landings =="Fish") %>%
-  summarize(fish_weight = sum(`Weight_(kg)`, na.rm=TRUE))
+  summarize(fish_weight = sum(weight.kg, na.rm=TRUE))
 
 fish.gear.month.all <- log.data %>%      # looking at the amount of fish caught per gear per month
   group_by(Month, Landings, Gear) %>%
   filter(Landings =="Fish") %>%
-  summarize(fish_weight = sum(`Weight_(kg)`, na.rm=TRUE))
+  summarize(fish_weight = sum(weight.kg, na.rm=TRUE))
 
 ##################### looking at how much lobster was caught and by what type of gear ################
 
@@ -186,7 +200,7 @@ names(log.data.Conch)   #check names
 ####################### cleaning logbooks and renaming ####################################
 
 log.data.F <- log.data.Fish %>% #create the join data and filter it by year to limit the observations
-  filter(!is.na(Year))%>%
+  filter(!is.na(Rec_ID))%>%
   mutate(Trip_ID=as.character(Trip_ID))
 names(log.data.F)
 
@@ -224,23 +238,25 @@ names(log.data.L)
 
 log.data.C <- log.data.Conch %>% #create the join data and filter it by year to limit the observations
   mutate(Rec_ID=as.character(Rec_ID)) %>% # rename this variable
-  filter(!is.na(Year))
+  filter(!is.na(Rec_ID))
 names(log.data.C)
 
 ###################################### Zone Analysis For Fish ##########################################
-zones.fish <- log.data %>% #rename variable to zone.fish
-  select(Rec_ID,Trip_ID,Year,Month,Day,Z1:Z6,Landings,Gear,`Weight_(kg)`,`max_(m)`,in.park) %>% #select relevent variables
-  mutate(n.zones=rowSums(!is.na(select(., Z1:Z6)))) %>% #mutate and keep new variable as n.zones
-  gather(key="zone.total",value="zone_id",Z1:Z6) %>% #bring these values together, and sum and rename them
+
+log.data.zone <- log.data %>% #rename variable to zone.fish
+  select(Rec_ID,Trip_ID,Year,Month,Day,Z1:Z6,Landings,Gear,weight.kg,`max_(m)`,in.park,n.zones,weight.per.zone, ind.per.zone) %>% #select relevent variables
+  gather(key="col.nam",value="zone_id",Z1:Z6) %>% #bring these values together, and sum and rename them # swap names
   filter(!is.na(zone_id)) %>%     #filter by zone ID and remove NAs
-  mutate(weight.per.zone=`Weight_(kg)`/n.zones) %>%  #mutate and keep new variable as weight per zone
-  filter(Landings=="Fish")%>%     # filter for only fish
   arrange(Trip_ID)                # arrange by unique trip ID for clarity
-head(zones.fish)   #check to make sure it was ordered properly
+head(log.data.zone)   #check to make sure it was ordered properly
+
+my_landings(log.data.zone,"Spiny Lobster",ind.per.zone,Year,zone_id)
+
 
 #amount of fish per zone per year, the number of trips, and the average number of fish per trip
 zone.fish.year <- zones.fish %>% #rename variable to zone.fish.year for analysis
- group_by(Year,zone_id)%>%  #group by the year, landings, and the zone ID
+ filter(Landings=="Fish") %>% 
+   group_by(Year,zone_id)%>%  #group by the year, landings, and the zone ID
  summarize(weight.total=sum(weight.per.zone,na.rm = T), #summerize by the total amount fo fish caught in that zone for that year
            Num.Trips=n_distinct(Trip_ID))%>%
   mutate(avg.weight.per.trip=weight.total/Num.Trips) #calculate the average catch per trip
