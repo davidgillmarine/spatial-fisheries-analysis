@@ -73,7 +73,7 @@ log.data <- log.data %>%
 ####################### looking at how much fish was caught and by what type of gear ################
 # Example
 my_landings(log.data,"Fish",weight.kg,Year,Month,Gear)
-my_landings(log.data,"Spiny Lobster",ind.per.zone,Year,zone_id)
+my_landings(log.data,"Spiny Lobster",ind.per.zone,Year)
 
 
 fish.weight.year <- log.data %>%   # looking at the amount of fish caught per year
@@ -652,8 +652,8 @@ conch.length.thickness.month<-log.data.C%>%
             samp.num.ind=n())
 head(conch.length.thickness.month)
 ########################## adding zone areas and initial map making for fishing pressure #####################
-gis.dir <- "/Users/gcullinan//OneDrive - Duke University/MP Project/spatial-fisheries-analysis/Data/Fisheries_Zones/"
-#gis.dir <-"R:/Gill/spatial-fisheries-analysis/tables/raw/Fisheries_Zones"
+#gis.dir <- "/Users/gcullinan//OneDrive - Duke University/MP Project/spatial-fisheries-analysis/Data/Fisheries_Zones/"
+gis.dir <-"R:/Gill/research/spatial-fisheries-analysis/spatial/raw/Fisheries_Zones"
 
  allfiles <- list.files(gis.dir,recursive = T, full.names = T) 
  allfiles
@@ -678,7 +678,7 @@ gis.dir <- "/Users/gcullinan//OneDrive - Duke University/MP Project/spatial-fish
  
  #create areas for erasing and intersecting for the Marine park (A) and land area (B) and zones 
  A<-zone.ind
- B<-st_read(file.list[9])
+ B<-st_read(file.list[9]) # ??? name file (Habitat map with Statia outline)
  # Erase land area (B) from marine park polygon (A)
  zone.ind <-st_difference(A,B) # erase area in the remaining zones that overlap with A 
  map.fill<-st_difference(B,zone.ind)

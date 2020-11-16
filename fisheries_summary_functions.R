@@ -27,19 +27,24 @@ my_summarize <-  function (.data,x,...) {
     rename(!!mean_name:=m)
 }
 
-my_landings <-  function (.data,sp.gp,val,...) { 
+my_landings <-  function (.data,area="all",sp.gp,val,...) { 
   # needed to use variable names in function
   group_var <- quos(...)
   enquo_sp.gp <- enquo(sp.gp)  # measurement variable
   enquo_val <- enquo(val)  # measurement variable
   # group and summarize
+  if(area=="park"){
+    area.var <- park.area.sqkm
+  }
+  else{
+    area.var <- fishing.area.sqkm
+    }
   .data %>%
     filter(Landings==UQ(enquo_sp.gp)) %>% 
     group_by(!!!group_var) %>% 
-    summarise(sum_land= sum2(UQ(enquo_val)),n_trips= n_distinct(Trip_ID),intensity_sqkm=sum_land/fishing.area.sqkm)  
-
+    summarise(sum_land= sum2(UQ(enquo_val)),n_trips= n_distinct(Trip_ID),intensity_sqkm=sum_land/area.var)  
 }
 
 # Examples
- my_landings(zones.fish,"Spiny Lobster",ind.per.zone,Year,zone_id)
-# my_summarize(filter(log.data,Landings=="Fish"),weight.kg,Year,Gear)
+ my_landings(log.data,"park","Spiny Lobster",Num_ind,Year)
+ my_summarize(filter(log.data,Landings=="Fish"),weight.kg,Year,Gear)
