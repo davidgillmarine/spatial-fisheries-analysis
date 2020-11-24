@@ -1,23 +1,12 @@
-install.packages('pacman')
-pacman::p_load(sf,rio,ggpubr,tidyverse)
-
-
-
-# install_formats()
-# library(ggplot2)
- library(cowplot)
- library(gridExtra)
-# library("RColorBrewer")
-# library(forcats)
-
-
+## This is a script that imports, cleans, and organizes excel pages for all of the data, a subset of 
+## fisheries, lobster, and conch data 
 
 
 ###################################### Import the Data ##############################
 input.dir <- '~/OneDrive - Duke University/MP Project/spatial-fisheries-analysis/Data/' #set the import directory
 #input.dir <- 'R:/Gill/research/spatial-fisheries-analysis/tables/raw/' #set the import directory
 log.data.total <- import(paste0(input.dir,"Statia logbook Raw data last update Feb 8 2019.xlsx"), #import the correct file and the page of the fisheries 
-                   which = 1, skip =1)                                                            #spreadsheet and tell it where to start from the top
+                         which = 1, skip =1)                                                            #spreadsheet and tell it where to start from the top
 
 ########################### select only the columns we are interested in and remove spaces ############
 # perhaps consider all lowercase/CamelCase with . or _ between words, no special characters
@@ -56,9 +45,6 @@ log.data <- log.data %>%
 fishing.area.sqkm <- 64.89144 # km2
 park.area.sqkm <- 27.5 # km2
 
-source("fisheries_summary_functions.R")
-
-####################### reading logbook entries for fish, lobster, and conch #############
 # reading in the fish, lobster and conch sample pages of the log book and replacing unusual characters
 
 log.data.Fish <- import(paste0(input.dir,"Statia logbook Raw data last update Feb 8 2019.xlsx"), 
@@ -76,8 +62,8 @@ names(log.data.Conch)   #check names
 ####################### cleaning logbooks and renaming ####################################
 
 log.data.F <- log.data.Fish %>% #create the join data and filter it by year to limit the observations
-   filter(!is.na(Rec_ID))%>%
-   mutate(Trip_ID=as.character(Trip_ID))
+  filter(!is.na(Rec_ID))%>%
+  mutate(Trip_ID=as.character(Trip_ID))
 names(log.data.F)
 
 unique(log.data.F$Gear)
@@ -108,81 +94,12 @@ log.data.F$Species_latin_name <- ifelse(log.data.F$Species_latin_name %in% c("Se
 unique(log.data.F$Species_latin_name)
 
 log.data.L <-log.data.Lobster %>% # create the join data and filter it by year to limit the observations
-   filter(!is.na(Year))%>%
-   mutate(Trip_ID=as.character(Trip_ID))
+  filter(!is.na(Year))%>%
+  mutate(Trip_ID=as.character(Trip_ID))
 names(log.data.L)
 
 log.data.C <- log.data.Conch %>% #create the join data and filter it by year to limit the observations
-   mutate(Rec_ID=as.character(Rec_ID)) %>% # rename this variable
-   filter(!is.na(Rec_ID))
+  mutate(Rec_ID=as.character(Rec_ID)) %>% # rename this variable
+  filter(!is.na(Rec_ID))
 names(log.data.C)
-
-####################### looking at how much fish was caught and by what type of gear ################
-# Example for how to use summarizing script fisheries_summary_functions for Fish landings, this can also 
-# be used for Spiny Lobster and Queen Conch 
-
-my_landings(log.data,"all","Fish",weight.kg,Year) #amount of fish caught per year for the whole fishing
-write_excel_csv(fish.weight.year, "Final_Figures_Tables/yearly_fishing_effort.xlxs") # This is to export the number 
-                                                                                    #of landings and intensity of fishing for each year for table in paper 
-my_landings(log.data,"park","Fish",weight.kg,in.park,Year) #amount of fish caught per year inside the park
-write_excel_csv(fish.weight.inpark.year, "Final_Figures_Tables/yearly_fishing_effort_inpark.xlxs")
-
-my_landings(log.data,"all","Fish",weight.kg,Year,Month)
-
-my_landings(log.data,"all","Fish",weight.kg,Gear)
-
-my_landings(log.data,"all","Fish",weight.kg,Year,Gear)
-
-my_landings(log.data,"all","Fish",weight.kg,Month,Gear)
-
-my_landings(log.data,"all","Fish",weight.kg,Year,Month,Gear)
-
-
-###################################### Zone Analysis For Fish ##########################################
-
-log.data.zone <- log.data %>% #rename variable to zone.fish
-  select(Rec_ID,Trip_ID,Year,Month,Day,Z1:Z6,Landings,Gear,weight.kg,`max_(m)`,in.park,n.zones,weight.per.zone, ind.per.zone) %>% #select relevent variables
-  gather(key="col.nam",value="zone_id",Z1:Z6) %>% #bring these values together, and sum and rename them # swap names
-  filter(!is.na(zone_id)) %>%     #filter by zone ID and remove NAs
-  arrange(Trip_ID)                # arrange by unique trip ID for clarity
-head(log.data.zone)   #check to make sure it was ordered properly
-
-#example for using the function "my_landings" 
-my_landings(log.data.zone,"all","Fish",weight.per.zone,Year,zone_id)
-
-#amount of fish per zone per year, the number of trips, and the average number of fish per trip
-zone.fish.year <- zones.fish %>% #rename variable to zone.fish.year for analysis
- filter(Landings=="Fish") %>% 
-   group_by(Year,zone_id)%>%  #group by the year, landings, and the zone ID
- summarize(weight.total=sum(weight.per.zone,na.rm = T), #summerize by the total amount fo fish caught in that zone for that year
-           Num.Trips=n_distinct(Trip_ID))%>%
-  mutate(avg.weight.per.trip=weight.total/Num.Trips) #calculate the average catch per trip
-head(zone.fish.year)
-
-#amount of fish per zone per year per gear, the number of trips using that gear, and the average weight using that gear per trip
-zone.fish.gear.year<-zones.fish %>%
-  group_by(Year, Gear, zone_id) %>%
-  summarize(weight.total=sum(weight.per.zone,na.rm = T),
-            Num.Trips=n_distinct(Trip_ID))%>%
-  mutate(avg.weight.per.trip=weight.total/Num.Trips)
-head(zone.fish.gear.year)  
-
-#looking at the amount of fish caught within the park, aka from 0-30m in depth for each year and by zone
-zone.fish.inpark.year <-zones.fish%>%
-  group_by(Year, zone_id,in.park)%>%
-  summarize(weight.total=sum(weight.per.zone,na.rm=T),
-            Num.Trips=n_distinct(Trip_ID))%>%
-  filter(in.park==1)
-head(zone.fish.inpark.year)
-
-#looking at the amount of fish caught within the park, aka from 0-30m in depth, for each year, by gear and zone
-zone.fish.inpark.gear.year <-zones.fish%>%
-  group_by(Year, Gear,zone_id,in.park)%>%
-  summarize(weight.total=sum(weight.per.zone,na.rm=T),
-            Num.Trips=n_distinct(Trip_ID))%>%
-  filter(in.park==1)
-head(zone.fish.inpark.gear.year)
- 
-
-
 

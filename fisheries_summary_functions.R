@@ -34,7 +34,7 @@ my_landings <-  function (.data,area="all",sp.gp,val,...) {
   enquo_val <- enquo(val)  # measurement variable
   # group and summarize
   if(area=="park"){
-    area.var <- park.area.sqkm
+      area.var <- park.area.sqkm
   }
   else{
     area.var <- fishing.area.sqkm
@@ -46,5 +46,5 @@ my_landings <-  function (.data,area="all",sp.gp,val,...) {
 }
 
 # Examples
- my_landings(log.data,"park","Spiny Lobster",Num_ind,Year)
+ my_landings(log.data,"park","Spiny Lobster",Num_ind,in.park,Year)
  my_summarize(filter(log.data,Landings=="Fish"),weight.kg,Year,Gear)
