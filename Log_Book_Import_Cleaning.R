@@ -1,5 +1,7 @@
-## This is a script that imports, cleans, and organizes excel pages for all of the data, a subset of 
-## fisheries, lobster, and conch data 
+## This is a script that imports, cleans, and organizes excel pages for all of the data, and a subset of 
+## fisheries, lobster, and conch data
+##Use this script first in order to clean and get the data ready for analysis in future scripts and map making
+
 
 
 ###################################### Import the Data ##############################
@@ -32,7 +34,7 @@ log.data$Landings <- ifelse(log.data$Landings %in% c("Queen Conch","Conch","conc
 log.data$Landings <- ifelse(log.data$Landings %in% c("Whelk","Whelks"), "Whelk",log.data$Landings) # edit for Whelk
 unique(log.data$Landings) #check
 
-#
+#Preparing the whole data script 
 log.data <- log.data %>% 
   mutate(Num_ind=as.numeric(Num_ind),
          Trip_ID=as.character(Trip_ID),
@@ -102,4 +104,16 @@ log.data.C <- log.data.Conch %>% #create the join data and filter it by year to 
   mutate(Rec_ID=as.character(Rec_ID)) %>% # rename this variable
   filter(!is.na(Rec_ID))
 names(log.data.C)
+
+# This is preparing the scirpt by zone for all species 
+log.data.zone <- log.data %>% #rename variable to zone.fish
+  select(Rec_ID,Trip_ID,Year,Month,Day,Z1:Z6,Landings,Gear,weight.kg,Num.ind,`max_(m)`,in.park,n.zones,weight.per.zone, ind.per.zone) %>% #select relevent variables
+  gather(key="col.nam",value="zone_id",Z1:Z6) %>% #bring these values together, and sum and rename them # swap names
+  filter(!is.na(zone_id)) %>%     #filter by zone ID and remove NAs
+  arrange(Trip_ID)                # arrange by unique trip ID for clarity
+head(log.data.zone)   #check to make sure it was ordered properly
+
+#export all of the clean data sheets so they can be called in later scripts 
+#use date as a timestamp in case there are changes 
+
 

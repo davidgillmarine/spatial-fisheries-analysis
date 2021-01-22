@@ -1,187 +1,53 @@
 install.packages('pacman')
-pacman::p_load(sf,rio,ggpubr,tidyverse)
+pacman::p_load(sf,rio,ggpubr,cowplot, gridExtra,tidyverse) # tidyverse last so there is no overwrite in package loading and function names
 
-
-
-# install_formats()
-# library(ggplot2)
- library(cowplot)
- library(gridExtra)
-# library("RColorBrewer")
-# library(forcats)
-
-
-
-
-###################################### Import the Data ##############################
-input.dir <- '~/OneDrive - Duke University/MP Project/spatial-fisheries-analysis/Data/' #set the import directory
-#input.dir <- 'R:/Gill/research/spatial-fisheries-analysis/tables/raw/' #set the import directory
-log.data.total <- import(paste0(input.dir,"Statia logbook Raw data last update Feb 8 2019.xlsx"), #import the correct file and the page of the fisheries 
-                   which = 1, skip =1)                                                            #spreadsheet and tell it where to start from the top
-
-########################### select only the columns we are interested in and remove spaces ############
-# perhaps consider all lowercase/CamelCase with . or _ between words, no special characters
-log.data <- select(log.data.total,Rec_ID:"No catch") #between Rec_ID and "No Catch are our interesting columns #rename the original data for analysis
-names(log.data)    #check the names 
-names(log.data) <- gsub(" ","_",names(log.data)) #get rid of the names between spaces
-names(log.data) <- gsub("No.lobster/fish_etc.","Num_ind",names(log.data)) #get rid of weird lobster name
-########################## Clean and tidy up the data by replaceing rogue names ###################
-unique(log.data$Year) #check
-log.data$Year <- ifelse(log.data$Year==2004,2014,log.data$Year) ## edit the years 
-log.data$Year <- ifelse(log.data$Year==2011,2017,log.data$Year) ## edit the years
-unique(log.data$Year) #check 
-
-unique(log.data$Gear) #check
-log.data$Gear <- ifelse(log.data$Gear=="pt","PT",log.data$Gear) # edit the gear types
-unique(log.data$Gear) #check
-
-unique(log.data$Landings) #check
-# log.data <- log.data %>% 
-#    mutate(Landings=tolower(Landings))  # option to simplify landings by changing all to lower case 
-log.data$Landings <- ifelse(log.data$Landings %in% c("Fish","fish","FIsh"), "Fish",log.data$Landings) # edit for Fish
-log.data$Landings <- ifelse(log.data$Landings %in% c("Queen Conch","Conch","conch"), "Queen Conch",log.data$Landings) # edit for Conch
-log.data$Landings <- ifelse(log.data$Landings %in% c("Whelk","Whelks"), "Whelk",log.data$Landings) # edit for Whelk
-unique(log.data$Landings) #check
-
-#
-log.data <- log.data %>% 
-  mutate(Num_ind=as.numeric(Num_ind),
-         Trip_ID=as.character(Trip_ID),
-         weight.kg=`Weight_(Lbs)`/2.2,
-         in.park=ifelse(`max_(m)`<=30, 1,0),
-         n.zones=rowSums(!is.na(select(., Z1:Z6))), # get # of zones fished 
-         weight.per.zone=weight.kg/n.zones,
-         ind.per.zone=Num_ind/n.zones) 
-
-fishing.area.sqkm <- 64.89144 # km2
-park.area.sqkm <- 27.5 # km2
 
 source("fisheries_summary_functions.R")
 
-####################### reading logbook entries for fish, lobster, and conch #############
-# reading in the fish, lobster and conch sample pages of the log book and replacing unusual characters
-
-log.data.Fish <- import(paste0(input.dir,"Statia logbook Raw data last update Feb 8 2019.xlsx"), 
-                        which = 2, skip =0, .name_repair="universal")   #import sheet for fish data
-names(log.data.Fish)  #check the names 
-
-log.data.Lobster <- import(paste0(input.dir,"Statia logbook Raw data last update Feb 8 2019.xlsx"),
-                           which = 3, skip =0, .name_repair="universal") # import sheet for lobster data
-names(log.data.Lobster) #check names
-
-log.data.Conch <- import(paste0(input.dir,"Statia logbook Raw data last update Feb 8 2019.xlsx"),
-                         which = 4, skip =0,.name_repair="universal") #import sheet for conch data
-names(log.data.Conch)   #check names
-
-####################### cleaning logbooks and renaming ####################################
-
-log.data.F <- log.data.Fish %>% #create the join data and filter it by year to limit the observations
-   filter(!is.na(Rec_ID))%>%
-   mutate(Trip_ID=as.character(Trip_ID))
-names(log.data.F)
-
-unique(log.data.F$Gear)
-log.data.F$Gear <- ifelse(log.data.F$Gear %in% c("PT","Pt","pt"), "PT",log.data.F$Gear)
-unique(log.data.F$Gear)
-
-unique(log.data.F$Species_latin_name)
-log.data.F$Species_latin_name <- ifelse(log.data.F$Species_latin_name %in% c("Lactophrys polygonia"), "Acanthostracion polygonia",log.data.F$Species_latin_name)
-log.data.F$Species_latin_name <- ifelse(log.data.F$Species_latin_name %in% c("Canthiderhines macrocerus"), "Cantherhines macrocerus",log.data.F$Species_latin_name)
-log.data.F$Species_latin_name <- ifelse(log.data.F$Species_latin_name %in% c("Cephalophilis fulva","Epinephelus fulvus"), "Cephalopholis fulva",log.data.F$Species_latin_name)
-log.data.F$Species_latin_name <- ifelse(log.data.F$Species_latin_name %in% c("Alectris ciliaris"), "Alectis ciliaris",log.data.F$Species_latin_name)
-log.data.F$Species_latin_name <- ifelse(log.data.F$Species_latin_name %in% c("caranx latus"), "Caranx latus",log.data.F$Species_latin_name)
-log.data.F$Species_latin_name <- ifelse(log.data.F$Species_latin_name %in% c("Aluterus schoepfi"), "Aluterus schoepfii",log.data.F$Species_latin_name)
-log.data.F$Species_latin_name <- ifelse(log.data.F$Species_latin_name %in% c("caranx lugubris"), "Caranx lugubris",log.data.F$Species_latin_name)
-log.data.F$Species_latin_name <- ifelse(log.data.F$Species_latin_name %in% c("Corypahaena hippurus"), "Coryphaena hippurus",log.data.F$Species_latin_name)
-log.data.F$Species_latin_name <- ifelse(log.data.F$Species_latin_name %in% c("Epinephelus cruentatus"), "Cephalopholis cruentata",log.data.F$Species_latin_name)
-log.data.F$Species_latin_name <- ifelse(log.data.F$Species_latin_name %in% c("Epinephelus stritatus"), "Epinephelus striatus",log.data.F$Species_latin_name)
-log.data.F$Species_latin_name <- ifelse(log.data.F$Species_latin_name %in% c("Euthynnuss pelamis"), "Katsuwonus pelamis",log.data.F$Species_latin_name)
-log.data.F$Species_latin_name <- ifelse(log.data.F$Species_latin_name %in% c("Haemulon plumierii"), "Haemulon plumieri",log.data.F$Species_latin_name)
-log.data.F$Species_latin_name <- ifelse(log.data.F$Species_latin_name %in% c("Haemulon striatus"), "Haemulon striatum",log.data.F$Species_latin_name)
-log.data.F$Species_latin_name <- ifelse(log.data.F$Species_latin_name %in% c("Holocanthus ciliaris"), "Holacanthus ciliaris",log.data.F$Species_latin_name)
-log.data.F$Species_latin_name <- ifelse(log.data.F$Species_latin_name %in% c("Lactophrys quadricornis"), "Acanthostracion quadricornis",log.data.F$Species_latin_name)
-log.data.F$Species_latin_name <- ifelse(log.data.F$Species_latin_name %in% c("Lutjanus Buccanella"), "Lutjanus buccanella",log.data.F$Species_latin_name)
-log.data.F$Species_latin_name <- ifelse(log.data.F$Species_latin_name %in% c("Pteris volitans"), "Pterois volitans",log.data.F$Species_latin_name)
-log.data.F$Species_latin_name <- ifelse(log.data.F$Species_latin_name %in% c("Scarus iserti"), "Scarus iseri",log.data.F$Species_latin_name)
-log.data.F$Species_latin_name <- ifelse(log.data.F$Species_latin_name %in% c("Selar crumenphthalamus"), "Selar crumenophthalmus",log.data.F$Species_latin_name)
-
-unique(log.data.F$Species_latin_name)
-
-log.data.L <-log.data.Lobster %>% # create the join data and filter it by year to limit the observations
-   filter(!is.na(Year))%>%
-   mutate(Trip_ID=as.character(Trip_ID))
-names(log.data.L)
-
-log.data.C <- log.data.Conch %>% #create the join data and filter it by year to limit the observations
-   mutate(Rec_ID=as.character(Rec_ID)) %>% # rename this variable
-   filter(!is.na(Rec_ID))
-names(log.data.C)
 
 ####################### looking at how much fish was caught and by what type of gear ################
 # Example for how to use summarizing script fisheries_summary_functions for Fish landings, this can also 
 # be used for Spiny Lobster and Queen Conch 
 
-my_landings(log.data,"all","Fish",weight.kg,Year) #amount of fish caught per year for the whole fishing
-write_excel_csv(fish.weight.year, "Final_Figures_Tables/yearly_fishing_effort.xlxs") # This is to export the number 
-                                                                                    #of landings and intensity of fishing for each year for table in paper 
-my_landings(log.data,"park","Fish",weight.kg,in.park,Year) #amount of fish caught per year inside the park
-write_excel_csv(fish.weight.inpark.year, "Final_Figures_Tables/yearly_fishing_effort_inpark.xlxs")
+fish.weight.year<-my_landings(log.data,"all","Fish",weight.kg,Year) #amount of fish caught per year for the whole fishing area
+head(fish.weight.year) #this is used to check and make sure that the data was analyzed correctly
+export(fish.weight.year,"Final_Figures_Tables/yearly_fishing_effort.xlsx") # This is to export the number of landings and intensity of fishing for each year for table in paper 
 
-my_landings(log.data,"all","Fish",weight.kg,Year,Month)
 
-my_landings(log.data,"all","Fish",weight.kg,Gear)
+fish.weight.inpark.year<-my_landings(log.data,"park","Fish",weight.kg,Year) #amount of fish caught per year inside the park ##double check with archive 
+head(fish.weight.inpark.year) #check your work
+export(fish.weight.inpark.year, "Final_Figures_Tables/yearly_fishing_effort_inpark.xlsx")
 
-my_landings(log.data,"all","Fish",weight.kg,Year,Gear)
-
-my_landings(log.data,"all","Fish",weight.kg,Month,Gear)
-
-my_landings(log.data,"all","Fish",weight.kg,Year,Month,Gear)
+#looking at the amount of fish caught per month, looking at sesonality 
+fish.weight.month<-my_landings(log.data,"all","Fish",weight.kg,Year,Month)
+#looking at the amount of fish caught by gear type
+fish.gear<-my_landings(log.data,"all","Fish",weight.kg,Gear)
+#looking at the amount of fish caught by year and gear type
+fish.gear.year<-my_landings(log.data,"all","Fish",weight.kg,Year,Gear)
+#looking at the amount of fish caught by month, and gear type loooking for seasonal gear usage
+fish.gear.month<-my_landings(log.data,"all","Fish",weight.kg,Month,Gear)
 
 
 ###################################### Zone Analysis For Fish ##########################################
-
-log.data.zone <- log.data %>% #rename variable to zone.fish
-  select(Rec_ID,Trip_ID,Year,Month,Day,Z1:Z6,Landings,Gear,weight.kg,`max_(m)`,in.park,n.zones,weight.per.zone, ind.per.zone) %>% #select relevent variables
-  gather(key="col.nam",value="zone_id",Z1:Z6) %>% #bring these values together, and sum and rename them # swap names
-  filter(!is.na(zone_id)) %>%     #filter by zone ID and remove NAs
-  arrange(Trip_ID)                # arrange by unique trip ID for clarity
-head(log.data.zone)   #check to make sure it was ordered properly
-
-#example for using the function "my_landings" 
-my_landings(log.data.zone,"all","Fish",weight.per.zone,Year,zone_id)
+#example for using the function "my_landings"  for zone analysis for fish, which can then be used for map making 
+#looking at the aggregation of fish landings per zone in order to calculate fishing intensity 
 
 #amount of fish per zone per year, the number of trips, and the average number of fish per trip
-zone.fish.year <- zones.fish %>% #rename variable to zone.fish.year for analysis
- filter(Landings=="Fish") %>% 
-   group_by(Year,zone_id)%>%  #group by the year, landings, and the zone ID
- summarize(weight.total=sum(weight.per.zone,na.rm = T), #summerize by the total amount fo fish caught in that zone for that year
-           Num.Trips=n_distinct(Trip_ID))%>%
-  mutate(avg.weight.per.trip=weight.total/Num.Trips) #calculate the average catch per trip
+zone.fish.year<-my_landings(log.data.zone,"all","Fish",weight.per.zone,Year,zone_id)
 head(zone.fish.year)
 
 #amount of fish per zone per year per gear, the number of trips using that gear, and the average weight using that gear per trip
-zone.fish.gear.year<-zones.fish %>%
-  group_by(Year, Gear, zone_id) %>%
-  summarize(weight.total=sum(weight.per.zone,na.rm = T),
-            Num.Trips=n_distinct(Trip_ID))%>%
-  mutate(avg.weight.per.trip=weight.total/Num.Trips)
-head(zone.fish.gear.year)  
+zone.fish.gear.year<-my_landings(log.data.zone,"all","Fish",weight.per.zone,Year,Gear,zone_id)
+head(zone.fish.gear.year)
 
 #looking at the amount of fish caught within the park, aka from 0-30m in depth for each year and by zone
-zone.fish.inpark.year <-zones.fish%>%
-  group_by(Year, zone_id,in.park)%>%
-  summarize(weight.total=sum(weight.per.zone,na.rm=T),
-            Num.Trips=n_distinct(Trip_ID))%>%
-  filter(in.park==1)
+zone.fish.inpark.year<-my_landings(log.data.zone,"park","Fish",weight.per.zone,Year,zone_id)
 head(zone.fish.inpark.year)
 
 #looking at the amount of fish caught within the park, aka from 0-30m in depth, for each year, by gear and zone
-zone.fish.inpark.gear.year <-zones.fish%>%
-  group_by(Year, Gear,zone_id,in.park)%>%
-  summarize(weight.total=sum(weight.per.zone,na.rm=T),
-            Num.Trips=n_distinct(Trip_ID))%>%
-  filter(in.park==1)
+zone.fish.inpark.gear.year<-my_landings(log.data.zone,"park","Fish",weight.per.zone,Year,Gear,zone_id)
 head(zone.fish.inpark.gear.year)
+
  
 
 

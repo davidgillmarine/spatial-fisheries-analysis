@@ -35,6 +35,7 @@ my_landings <-  function (.data,area="all",sp.gp,val,...) {
   # group and summarize
   if(area=="park"){
       area.var <- park.area.sqkm
+      .data<-filter(.data, in.park==1)
   }
   else{
     area.var <- fishing.area.sqkm
@@ -42,9 +43,16 @@ my_landings <-  function (.data,area="all",sp.gp,val,...) {
   .data %>%
     filter(Landings==UQ(enquo_sp.gp)) %>% 
     group_by(!!!group_var) %>% 
-    summarise(sum_land= sum2(UQ(enquo_val)),n_trips= n_distinct(Trip_ID),intensity_sqkm=sum_land/area.var)  
+    summarise(total_land= sum2(UQ(enquo_val)),n_trips= n_distinct(Trip_ID),land.per.trip=total_land/n_trips,intensity_sqkm=total_land/area.var)  
 }
 
-# Examples
- my_landings(log.data,"park","Spiny Lobster",Num_ind,in.park,Year)
- my_summarize(filter(log.data,Landings=="Fish"),weight.kg,Year,Gear)
+# Examples for my_landings use 
+  #my_landings([put in name of main data set/frame for analysis], ["all" or "park" (choose what land area to include in analysis)], 
+  #[choose species for analysis such as "Fish" or "Spiny Lobster"], [choose measurement variable such as weight.kg or num.ind.],
+  #[choose grouping variable(s) such as grouping by Year, Month, or Gear])
+my_landings(log.data,"park","Fish",weight.kg,Year,Gear) #This shows how much fish was caught in the marine park by year and gear type
+#see statia_fisheries_data_scoping for further examples
+#Examples for my_summarize use
+  #my_summarize(filter([choose data st/frame for analysis], [choose species such as "Fish"], [choose measurement variable
+  #such as weight.kg], [choose grouping variable(s) such as year or gear]))
+my_summarize(filter(log.data,Landings=="Fish"),weight.kg,Year,Gear)
