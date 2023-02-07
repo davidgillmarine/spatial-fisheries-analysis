@@ -1,5 +1,8 @@
+#######NOTE: This file is named as a Copy, but this is NOT a copy!!! This is the file that has all of the Data cleaning in it as well, super important.
+# may want to delete the statia_fisheries_data_scoping.R file, as I don't think it holds anything different, but going to check now
+
 install.packages('pacman')
-pacman::p_load(sf,rio,ggpubr,tidyverse)
+pacman::p_load(sf,rio,ggpubr,cowplot, gridExtra, tidyverse)
 
 
 # library(sf)  #importing the correct library packages
@@ -26,6 +29,7 @@ log.data <- select(log.data.total,Rec_ID:"No catch") #between Rec_ID and "No Cat
 names(log.data)    #check the names 
 names(log.data) <- gsub(" ","_",names(log.data)) #get rid of the names between spaces
 names(log.data) <- gsub("No.lobster/fish_etc.","Num_ind",names(log.data)) #get rid of weird lobster name
+
 ########################## Clean and tidy up the data by replaceing rogue names ###################
 unique(log.data$Year) #check
 log.data$Year <- ifelse(log.data$Year==2004,2014,log.data$Year) ## edit the years 
