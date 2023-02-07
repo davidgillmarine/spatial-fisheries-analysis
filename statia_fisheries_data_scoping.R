@@ -11,12 +11,13 @@ source("fisheries_summary_functions.R")
 
 fish.weight.year<-my_landings(log.data,"all","Fish",weight.kg,Year) #amount of fish caught per year for the whole fishing area
 head(fish.weight.year) #this is used to check and make sure that the data was analyzed correctly
-export(fish.weight.year,"Final_Figures_Tables/yearly_fishing_effort.xlsx") # This is to export the number of landings and intensity of fishing for each year for table in paper 
+export(fish.weight.year,"Final_Figures_Tables/yearly_fishing_effort.xlsx") # This is to export the number of landings and intensity of fishing 
+  # for each year for table in paper 
 
 
 fish.weight.inpark.year<-my_landings(log.data,"park","Fish",weight.kg,Year) #amount of fish caught per year inside the park ##double check with archive 
 head(fish.weight.inpark.year) #check your work
-export(fish.weight.inpark.year, "Final_Figures_Tables/yearly_fishing_effort_inpark.xlsx")
+export(fish.weight.inpark.year, "Final_Figures_Tables/yearly_fishing_effort_inpark.xlsx") 
 
 #looking at the amount of fish caught per month, looking at sesonality 
 fish.weight.month<-my_landings(log.data,"all","Fish",weight.kg,Year,Month)
