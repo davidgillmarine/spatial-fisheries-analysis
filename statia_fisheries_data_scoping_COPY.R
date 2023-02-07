@@ -16,8 +16,7 @@ pacman::p_load(sf,rio,ggpubr,tidyverse)
 
 
 ###################################### Import the Data ##############################
-input.dir <- '~/OneDrive - Duke University/MP Project/spatial-fisheries-analysis/Data/' #set the import directory
-#input.dir <- 'R:/Gill/research/spatial-fisheries-analysis/tables/raw/' #set the import directory
+input.dir <- 'R:/Gill/research/spatial-fisheries-analysis/tables/raw/' #set the import directory
 log.data.total <- import(paste0(input.dir,"Statia logbook Raw data last update Feb 8 2019.xlsx"), #import the correct file and the page of the fisheries 
                          which = 1, skip =1)                                                            #spreadsheet and tell it where to start from the top
 
