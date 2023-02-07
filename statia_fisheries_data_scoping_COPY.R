@@ -1,5 +1,6 @@
 #######NOTE: This file is named as a Copy, but this is NOT a copy!!! This is the file that has all of the Data cleaning in it as well, super important.
 # may want to delete the statia_fisheries_data_scoping.R file, as I don't think it holds anything different, but going to check now
+# right now, just run this AFTER statia_fisheries_data_scoping.R
 
 install.packages('pacman')
 pacman::p_load(sf,rio,ggpubr,cowplot, gridExtra, tidyverse)
@@ -30,7 +31,7 @@ names(log.data)    #check the names
 names(log.data) <- gsub(" ","_",names(log.data)) #get rid of the names between spaces
 names(log.data) <- gsub("No.lobster/fish_etc.","Num_ind",names(log.data)) #get rid of weird lobster name
 
-########################## Clean and tidy up the data by replaceing rogue names ###################
+########################## Clean and tidy up the data by replacing rogue names ###################
 unique(log.data$Year) #check
 log.data$Year <- ifelse(log.data$Year==2004,2014,log.data$Year) ## edit the years 
 log.data$Year <- ifelse(log.data$Year==2011,2017,log.data$Year) ## edit the years
@@ -88,14 +89,14 @@ fish.weight.year <- log.data %>%   # looking at the amount of fish caught per ye
   filter(Landings=="Fish") %>%     # sort the data just by fish
   group_by(Year)%>%      #group by the relevent groups
   summarize(fish_weight = sum(weight.kg, na.rm=TRUE),
-            n_trips=n_distinct(Trip_ID))%>%   #summerize by these groups by unique Trip_ID and remove NAs
+            n_trips=n_distinct(Trip_ID))%>%   #summarize by these groups by unique Trip_ID and remove NAs
   mutate(fish_intensity_sqkm=fish_weight/fishing.area.sqkm)
 head(fish.weight.year)
 write_excel_csv(fish.weight.year, "Final_Figures_Tables/yearly_fishing_effort.xlxs")
 
 fish.weight.inpark.year <- log.data %>%   # looking at the amount of fish caught per year
   filter(Landings=="Fish") %>%     # sort the data just by fish
-  group_by(Year)%>%      #group by the relevent groups
+  group_by(Year)%>%      #group by the relevant groups
   filter(in.park==1)%>%
   summarize(fish_weight = sum(weight.kg, na.rm=TRUE),
             n_trips=n_distinct(Trip_ID))%>%   #summerize by these groups by unique Trip_ID and remove NAs
@@ -462,7 +463,7 @@ zone.conch.inpark.gear.year <-zones.conch%>%
 head(zone.conch.inpark.gear.year)
 
 ####################################### Fish Data by Species #########################
-#join with GCRM table and look at this for the family level and do the same thing donw below with the gear types
+#join with GCRM table and look at this for the family level and do the same thing down below with the gear types
 GCRM.data.Fish <- import(paste0(input.dir,"GCRMN FISH BIOMASS DATA EUX 2018.xlsx"),
                          which = 6, skip =0, .name_repair="universal")   #import sheet for fish LW values
 
@@ -659,8 +660,8 @@ conch.length.thickness.month<-log.data.C%>%
             mean_lip_thickness=mean(Lip_thickness_.mm.,na.rm=T),
             samp.num.ind=n())
 head(conch.length.thickness.month)
+
 ########################## adding zone areas and initial map making for fishing pressure #####################
-#gis.dir <- "/Users/gcullinan//OneDrive - Duke University/MP Project/spatial-fisheries-analysis/Data/Fisheries_Zones/"
 gis.dir <-"R:/Gill/research/spatial-fisheries-analysis/spatial/raw/Fisheries_Zones"
 
 allfiles <- list.files(gis.dir,recursive = T, full.names = T) 
