@@ -56,3 +56,4 @@ my_landings(log.data,"park","Fish",weight.kg,Year,Gear) #This shows how much fis
   #my_summarize(filter([choose data st/frame for analysis], [choose species such as "Fish"], [choose measurement variable
   #such as weight.kg], [choose grouping variable(s) such as year or gear]))
 my_summarize(filter(log.data,Landings=="Fish"),weight.kg,Year,Gear)
+

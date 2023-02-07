@@ -1,4 +1,4 @@
-### NOTE: Need to Run the file "fisheries_summary_functions.R" before coming to run this file!
+### IMPORTANT NOTE: Need to Run the file "fisheries_summary_functions.R" before coming to run this file!
 
 install.packages('pacman')
 pacman::p_load(sf,rio,ggpubr,cowplot, gridExtra,tidyverse) # tidyverse last so there is no overwrite in package loading and function names
