@@ -1,8 +1,7 @@
 
 
 ########################## adding zone areas and initial map making for fishing pressure #####################
-gis.dir <- "/Users/gcullinan//OneDrive - Duke University/MP Project/spatial-fisheries-analysis/Data/Fisheries_Zones/"
-#gis.dir <-"R:/Gill/research/spatial-fisheries-analysis/spatial/raw/Fisheries_Zones"
+gis.dir <-"R:/Gill/research/spatial-fisheries-analysis/spatial/raw/Fisheries_Zones"
 
 allfiles <- list.files(gis.dir,recursive = T, full.names = T) 
 allfiles
