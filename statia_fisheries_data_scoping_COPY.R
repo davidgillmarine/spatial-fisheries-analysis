@@ -1,5 +1,7 @@
-#######NOTE: This file is named as a Copy, but this is NOT a copy!!! This is the file that has all of the Data cleaning in it as well, super important.
-# may want to delete the statia_fisheries_data_scoping.R file, as I don't think it holds anything different, but going to check now
+#######NOTE: This file is named as a Copy, but this is NOT a copy!!! This is the file that has all of the Data cleaning in it as well, and might (?)
+  # be a compilation of ALL of the other files combined!!!
+  # CAN we clean this by getting rid of all of those files and only sticking with this file?! Is this a true master? I think this would make 
+  # life much easier (and get rid of having to edit duplicates all the time...)
 # right now, just run this AFTER statia_fisheries_data_scoping.R
 
 install.packages('pacman')
@@ -1270,7 +1272,9 @@ parrotfish_years_avg+
   ggtitle("Sample Average Parrotfish Catch per Trip per Year From 2012-2018")
 ggsave("Parrotfish_Year_Avg_2012-2018.png", path="Final_Figures_Tables/", width=14, height=9, units=c("in"))
 
-##################### assessing annual Fishing Intensity by gear type and prepping for maps #################  
+
+##################### assessing annual Fishing Intensity by gear type and prepping for maps #################
+
 # changing the character type and joining the fishing summaries with the spatial geometries
 gis.dir <- "/Users/gcullinan//OneDrive - Duke University/MP Project/spatial-fisheries-analysis/Data/Fisheries_Zones/"
 #gis.dir <-"R:/Gill/spatial-fisheries-analysis/tables/raw/Fisheries_Zones"
@@ -1954,6 +1958,7 @@ plot(conch.zone.PT)
 
 plot_grid_conch_gear<-plot_grid(conch.zone.FD,conch.zone.PT,conch.zone.SD)
 ggsave("Conch_Fishing_Effort_by_Gear_Type.png", plot = plot_grid_conch_gear, device = "png", path="Final_Figures_Tables/",scale = 1.25, width=12, height=8, units="in")
+
 ################### seasonal plots for fish, lobsters, and conch, no zones########################
 #looking at fish monthly season totals
 fish.months.season <- zones.fish %>% 
