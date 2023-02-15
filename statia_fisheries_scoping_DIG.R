@@ -1,15 +1,10 @@
----
-  title: "OEGM script"
-author: "David A. Gill & Dana I. Grieco"
-date: "3/17/2021"
-output: html_document
----
-  # Note for Others:
-  If you use this script, please acknowledge David A. Gill, Samantha H. Cheng, and Dana I. Grieco in your paper. Thank you!
-  
-  
-  # Setup
-  Loads libraries, reads in data, cleans datasets
+#title: "Statia Fisheries Scoping DIG"
+#created by: "David A. Gill & Grace Cullinan"
+#amended by:  "Dana I. Grieco"
+#date: "2/15/2023"
+#output: html_document
+
+# Need to turn this into a proper RMD file!
 
 #######NOTE: This file is named as a Copy, but this is NOT a copy!!! This is the file that has all of the Data cleaning in it as well, and might (?)
   # be a compilation of ALL of the other files combined!!!
@@ -17,9 +12,9 @@ output: html_document
   # life much easier (and get rid of having to edit duplicates all the time...)
 # right now, just run this AFTER statia_fisheries_data_scoping.R
 
+# SETUP
 install.packages('pacman')
 pacman::p_load(sf,rio,ggpubr,cowplot, gridExtra, tidyverse)
-
 
 # library(sf)  #importing the correct library packages
 # library(rio)
@@ -33,9 +28,18 @@ pacman::p_load(sf,rio,ggpubr,cowplot, gridExtra, tidyverse)
 # library(ggpubr)
 # library(gridExtra)
 
+#set working directory to the correct folders on your machine
+workdir <- "R:/Gill/research/spatial-fisheries-analysis/"
+input.dir <- paste0(workdir,"tables/raw/") #set the import directory - for a PC
+spatialdir <-  paste0(workdir,"spatial/raw/") 
+plotdir <- paste0(workdir,"output/")
+tabledir <- paste0(workdir,"output/")
+
+today.date <- gsub("-","",Sys.Date())
+
 
 ###################################### Import the Data ##############################
-input.dir <- 'R:/Gill/research/spatial-fisheries-analysis/tables/raw/' #set the import directory - for a PC
+
 log.data.total <- import(paste0(input.dir,"Statia logbook Raw data last update Feb 8 2019.xlsx"), #import the correct file and the page of the fisheries 
                          which = 1, skip =1)                                                            #spreadsheet and tell it where to start from the top
 
@@ -391,8 +395,8 @@ stoplight.species.subset <- fish.species %>%
   group_by(Year)%>%
   filter(Species_latin_name %in% c("Sparisoma viride"))
 head(stoplight.species.subset)
-write.csv(stoplight.species.subset, "R:/Gill/research/spatial-fisheries-analysis/tables/", row.names=TRUE)
-
+write.csv(stoplight.species.subset,paste0(tabledir,today.date,"_Stoplight_Species_Subset.csv"))
+#I then edited the bins by hand and saved the file... now switching over to LIME!!!!
 
 ##################### visualization of sub-species means over the years ##################################
 
