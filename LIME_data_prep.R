@@ -48,7 +48,7 @@ fish.dat.gp1 <- fish.dat.gp %>%
 
 fish.dat.gp1 %>% view()
   #**NOTE: there is one species who does not have it's species latin name listed - need to try and find it via common name
-write.csv(fish.dat.gp1,paste0(speciesdir,today.date,"__ALL_Species.csv"))
+write.csv(fish.dat.gp1,paste0(speciesdir,today.date,"_Statia_LIME__ALL_Species.csv"))
 
 
 ###################################### DIG Continuation of this work! ##############################
@@ -112,7 +112,7 @@ write.csv(fish.dat.gp1,paste0(speciesdir,today.date,"__ALL_Species.csv"))
 Sparisoma.viride <- fish.dat.gp1 %>% 
   filter(species_latin_name == "Sparisoma viride") %>% 
   view ()
-write.csv(Sparisoma.viride,paste0(speciesdir,today.date,"_Sparisoma.viride.csv"))
+write.csv(Sparisoma.viride,paste0(speciesdir,today.date,"_Statia_LIME_Sparisoma.viride.csv"))
 #  ()
 #  ()
 
