@@ -2,6 +2,15 @@ library(rio)
 library(janitor)
 library(tidyverse)
 
+#set working directory to the R Drive
+workdir <- "R:/Gill/research/spatial-fisheries-analysis/"
+input.dir <- paste0(workdir,"tables/raw/")
+spatialdir <-  paste0(workdir,"spatial/raw/") 
+plotdir <- paste0(workdir,"output/")
+tabledir <- paste0(workdir,"output/")
+speciesdir <- "R:/Gill/research/spatial-fisheries-analysis/tables/final/LIME_Outputs/"
+  #^directory where all individual species catch will be housed, for LIME analysis
+
 
 ###################################### Import the Data ##############################
 input.dir <- 'R:/Gill/research/spatial-fisheries-analysis/tables/raw/' #set the import directory
@@ -38,5 +47,87 @@ fish.dat.gp1 <- fish.dat.gp %>%
 
 
 fish.dat.gp1 %>% view()
-  #NOTE: there is one species who does not have it's species latin name listed - need to try and find it via common name
+  #**NOTE: there is one species who does not have it's species latin name listed - need to try and find it via common name
+
+
+###################################### DIG Continuation of this work! ##############################
+
+###  ()
+#  ()
+#  ()
+#  ()
+
+
+### Acanthuridae ()
+# Acanthurus bahianus (ocean surgeonfish)
+# Acanthurus chirurgus (doctorfish)
+# Acanthurus coeruleus (blue tang)
+#  ()
+#  ()
+
+### Aulostomidae ()
+# Aulostomus maculatus (trumpetfish)
+#  ()
+
+### Balistidae ()
+# Balistes vetula (queen triggerfish)
+#  ()
+
+### Cirrhitidae ()
+# Amblycirrhitus pinos (redspotted hawkfish)
+#  ()
+
+### Haemulidae ()
+# Anisotremus surinamensis (black margate)
+#  ()
+
+### Labridae ()
+# Bodianus rufus (Spanish hogfish)
+#  ()
+
+### Monacanthidae ()
+# Cantherhines macrocerus (whitespotted filefish)
+# Cantherhines pullus (orangespotted filefish)
+#  ()
+#  ()
+
+### Ostraciidae ()
+# Acanthostracion polygonia (honeycomb cowfish)
+#  ()
+#  ()
+#  ()
+
+### Pomacentridae ()
+# Abudefduf saxatilis (sergeant major) 
+# Abudefduf taurus (night sergeant)
+#  ()
+#  ()
+
+
+
+### SCARIDAE (PARROTFISH)
+#  ()
+# Sparisoma viride (Stoplight parrotfish)
+Sparisoma.viride <- fish.dat.gp1 %>% 
+  filter(species_latin_name == "Sparisoma viride") %>% 
+  view ()
+write.csv(Sparisoma.viride,paste0(speciesdir,today.date,"_Sparisoma.viride.csv"))
+#  ()
+#  ()
+
+### Sparidae ()
+# Calamus bajonado (jolthead porgy)
+#  ()
+#  ()
+
+
+###  ()
+#  ()
+#  ()
+#  ()
+
+
+
+
+#... now switching over to LIME!!!!
 
