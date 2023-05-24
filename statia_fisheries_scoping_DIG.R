@@ -5,12 +5,7 @@
 #output: html_document
 
 # Need to turn this into a proper RMD file!
-
-#######NOTE: This file is named as a Copy, but this is NOT a copy!!! This is the file that has all of the Data cleaning in it as well, and might (?)
-  # be a compilation of ALL of the other files combined!!!
-  # CAN we clean this by getting rid of all of those files and only sticking with this file?! Is this a true master? I think this would make 
-  # life much easier (and get rid of having to edit duplicates all the time...)
-# right now, just run this AFTER statia_fisheries_data_scoping.R
+#######NOTE: Took this from the Statia_fisheries_data_scoping_COPY.R file. - need to update that file as well :)
 
 # SETUP
 install.packages('pacman')
@@ -37,6 +32,9 @@ tabledir <- paste0(workdir,"output/")
 
 today.date <- gsub("-","",Sys.Date())
 
+########################################################################## 
+##### SKIPPING THESE STEPS TO GO TO MY WORK/DAVID'S DATA CLEANING ########
+########################################################################## 
 
 ###################################### Import the Data ##############################
 
@@ -374,6 +372,11 @@ mean.family.weight <- fish.species %>%
   filter(!is.na(family))
 head(mean.family.weight)
 
+
+########################################################################## 
+##### HERE ########
+########################################################################## 
+
 ##################### DIG - Parrotfish (Scaridae family) Prep for LIME ##################################
 
 # parrotfish (Scaridae) subset
@@ -397,6 +400,10 @@ stoplight.species.subset <- fish.species %>%
 head(stoplight.species.subset)
 write.csv(stoplight.species.subset,paste0(tabledir,today.date,"_Stoplight_Species_Subset.csv"))
 #I then edited the bins by hand and saved the file... now switching over to LIME!!!!
+
+########################################################################## 
+##### STOPPED HERE ########
+########################################################################## 
 
 ##################### visualization of sub-species means over the years ##################################
 
