@@ -48,6 +48,7 @@ fish.dat.gp1 <- fish.dat.gp %>%
 
 fish.dat.gp1 %>% view()
   #**NOTE: there is one species who does not have it's species latin name listed - need to try and find it via common name
+write.csv(fish.dat.gp1,paste0(speciesdir,today.date,"__ALL_Species.csv"))
 
 
 ###################################### DIG Continuation of this work! ##############################
