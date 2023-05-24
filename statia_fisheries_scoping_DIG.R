@@ -23,9 +23,9 @@ pacman::p_load(sf,rio,ggpubr,cowplot, gridExtra, tidyverse)
 # library(ggpubr)
 # library(gridExtra)
 
-#set working directory to the correct folders on your machine
+#set working directory to the R Drive
 workdir <- "R:/Gill/research/spatial-fisheries-analysis/"
-input.dir <- paste0(workdir,"tables/raw/") #set the import directory - for a PC
+input.dir <- paste0(workdir,"tables/raw/") 
 spatialdir <-  paste0(workdir,"spatial/raw/") 
 plotdir <- paste0(workdir,"output/")
 tabledir <- paste0(workdir,"output/")
@@ -38,7 +38,7 @@ today.date <- gsub("-","",Sys.Date())
 
 ###################################### Import the Data ##############################
 
-log.data.total <- import(paste0(input.dir,"Statia logbook Raw data last update Feb 8 2019.xlsx"), #import the correct file and the page of the fisheries 
+log.data.total <- import(paste0(input.dir,"Statia logbook Raw data last update October 2022.xlsx"), #import the correct file and the page of the fisheries 
                          which = 1, skip =1)                                                            #spreadsheet and tell it where to start from the top
 
 ########################### select only the columns we are interested in and remove spaces ############
