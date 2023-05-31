@@ -33,7 +33,7 @@ tabledir <- paste0(workdir,"output/")
 today.date <- gsub("-","",Sys.Date())
 
 ########################################################################## 
-##### SKIPPING THESE STEPS TO GO TO MY WORK/DAVID'S DATA CLEANING ########
+##### THESE ARE OLD STEPS/DATA CLEANING... STILL NEED TO RUN ########
 ########################################################################## 
 
 ###################################### Import the Data ##############################
@@ -87,8 +87,8 @@ source("fisheries_summary_functions.R")
 #################### Breaking out the data by year, and month, and by gear. And by fish, lobster and conch #############
 
 log.data <- log.data %>% 
-  group_by(Year) %>%           #group by the relevent groups
-  mutate(trips.year=n_distinct(Trip_ID)) %>%    #summerize by these groups by unique Trip_ID
+  group_by(Year) %>%           #group by the relevant groups
+  mutate(trips.year=n_distinct(Trip_ID)) %>%    #summarize by these groups by unique Trip_ID
   group_by(Year, Month) %>%         
   mutate(trips.month=n_distinct(Trip_ID)) %>%      
   group_by(Year, Gear) %>%         
@@ -152,15 +152,15 @@ fish.gear.month.all <- log.data %>%      # looking at the amount of fish caught 
 
 # reading in the fish, lobster and conch sample pages of the log book and replacing unusual characters
 
-log.data.Fish <- import(paste0(input.dir,"Statia logbook Raw data last update Feb 8 2019.xlsx"), 
+log.data.Fish <- import(paste0(input.dir,"Statia logbook Raw data last update October 2022.xlsx"), 
                         which = 2, skip =0, .name_repair="universal")   #import sheet for fish data
 names(log.data.Fish)  #check the names 
 
-log.data.Lobster <- import(paste0(input.dir,"Statia logbook Raw data last update Feb 8 2019.xlsx"),
+log.data.Lobster <- import(paste0(input.dir,"Statia logbook Raw data last update October 2022.xlsx"),
                            which = 3, skip =0, .name_repair="universal") # import sheet for lobster data
 names(log.data.Lobster) #check names
 
-log.data.Conch <- import(paste0(input.dir,"Statia logbook Raw data last update Feb 8 2019.xlsx"),
+log.data.Conch <- import(paste0(input.dir,"Statia logbook Raw data last update October 2022.xlsx"),
                          which = 4, skip =0,.name_repair="universal") #import sheet for conch data
 names(log.data.Conch)   #check names
 
@@ -175,6 +175,7 @@ unique(log.data.F$Gear)
 log.data.F$Gear <- ifelse(log.data.F$Gear %in% c("PT","Pt","pt"), "PT",log.data.F$Gear)
 unique(log.data.F$Gear)
 
+# renaming spelling errors in latin names
 unique(log.data.F$Species_latin_name)
 log.data.F$Species_latin_name <- ifelse(log.data.F$Species_latin_name %in% c("Lactophrys polygonia"), "Acanthostracion polygonia",log.data.F$Species_latin_name)
 log.data.F$Species_latin_name <- ifelse(log.data.F$Species_latin_name %in% c("Canthiderhines macrocerus"), "Cantherhines macrocerus",log.data.F$Species_latin_name)
@@ -374,7 +375,7 @@ head(mean.family.weight)
 
 
 ########################################################################## 
-##### HERE ########
+##### DANA'S NEW WORK HERE ########
 ########################################################################## 
 
 ##################### DIG - Parrotfish (Scaridae family) Prep for LIME ##################################
